@@ -1,0 +1,229 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  html {
+    font-size: 16px;
+  }
+
+  :root {
+    /* Lyn CRM - Official Brand Colors (mLabs Design System) */
+
+    /* Primary Colors */
+    --lyn-primary: 214 79% 51%;
+    /* #1A73E8 - Main brand color (Blue) */
+    --lyn-primary-light: 197 92% 67%;
+    /* #5FC1F8 - Light variant */
+    --lyn-primary-deep: 213 81% 42%;
+    /* #1565C0 - Deep variant */
+    --lyn-accent: 18 88% 55%;
+    /* #F26526 - Accent/CTA (Orange) */
+
+    /* WhatsApp / Chat Variables */
+    --chat-bg: 220 14% 96%;
+    /* #F0F2F5 */
+    --bubble-sent: 142 69% 94%;
+    /* #D9FDD3 */
+    --bubble-received: 0 0% 100%;
+    /* #FFFFFF */
+    --chat-header-height: 60px;
+
+
+    /* Secondary Colors */
+    --azul-tech: 214 79% 51%;
+    /* #1A73E8 - mapped to primary blue */
+    --purple-soft: 197 92% 67%;
+    /* #5FC1F8 - mapped to light blue */
+    --magenta-ia: 18 88% 55%;
+    /* #F26526 - mapped to orange accent */
+
+    /* Neutral Colors */
+    --fundo-geral: 214 50% 98%;
+    /* #F7F9FC */
+    --branco: 0 0% 100%;
+    /* #FFFFFF */
+    --borda: 220 13% 91%;
+    /* #E5E7EB */
+    --texto: 0 0% 12%;
+    /* #1E1E1E */
+    --texto-secundario: 220 9% 46%;
+    /* #6B7280 */
+
+    /* Funnel Status Colors */
+    --status-novos: 214 79% 51%;
+    /* #1A73E8 - Lyn Primary */
+    --status-qualificacao: 221 100% 68%;
+    /* #5B8CFF */
+    --status-objecao: 45 89% 60%;
+    /* #F4C63D */
+    --status-negociacao: 31 100% 63%;
+    /* #FF9F43 */
+    --status-agendamento: 162 63% 52%;
+    /* #34D399 */
+
+    /* Shadcn Tokens - Mapped to Lyn CRM / mLabs Brand */
+    --background: 210 50% 98%;
+    /* #F4F9FE - Fundo Geral */
+    --foreground: 0 0% 28%;
+    /* #474747 - Texto */
+
+    --card: 0 0% 100%;
+    /* Branco */
+    --card-foreground: 210 20% 12%;
+    /* #1F2937 - Headings */
+
+    --popover: 0 0% 100%;
+    /* Branco */
+    --popover-foreground: 210 20% 12%;
+    /* #1F2937 */
+
+    --primary: 214 79% 51%;
+    /* #1A73E8 - Blue */
+    --primary-foreground: 0 0% 100%;
+    /* Branco */
+
+    --secondary: 197 92% 67%;
+    /* #5FC1F8 - Light Blue */
+    --secondary-foreground: 213 81% 42%;
+    /* #1565C0 - Deep Blue */
+
+    --muted: 220 13% 91%;
+    /* Borda */
+    --muted-foreground: 220 9% 46%;
+    /* Texto Secundario */
+
+    --accent: 18 88% 55%;
+    /* #F26526 - Orange */
+    --accent-foreground: 0 0% 100%;
+    /* Branco */
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    /* #E5E7EB - Borda */
+    --input: 220 13% 91%;
+    /* Borda */
+    --ring: 214 79% 51%;
+    /* #1A73E8 - Primary Blue */
+
+    --radius: 1.375rem;
+    /* 22px - mLabs card radius */
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 210 20% 12%;
+    --sidebar-primary: 214 79% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 50% 98%;
+    --sidebar-accent-foreground: 210 20% 12%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 214 79% 51%;
+  }
+
+  .dark {
+    /* Lyn CRM - Dark Mode */
+
+    --background: 225 25% 8%;
+    /* #0F1117 - Dark background */
+    --foreground: 214 50% 98%;
+    /* #F8FAFC - Dark text */
+
+    --card: 225 20% 13%;
+    /* #1A1D25 - Dark cards */
+    --card-foreground: 214 50% 98%;
+    /* #F8FAFC */
+
+    --popover: 225 20% 13%;
+    /* #1A1D25 */
+    --popover-foreground: 214 50% 98%;
+    /* #F8FAFC */
+
+    --primary: 214 79% 51%;
+    /* #1A73E8 - Blue */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 225 20% 13%;
+    /* #1A1D25 */
+    --secondary-foreground: 214 50% 98%;
+
+    --muted: 225 12% 19%;
+    /* #2A2E37 - Dark borders */
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 18 88% 55%;
+    /* #F26526 - Orange */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 214 50% 98%;
+
+    --border: 225 12% 19%;
+    /* #2A2E37 */
+    --input: 225 12% 19%;
+    --ring: 214 79% 51%;
+
+    /* Sidebar Dark */
+    --sidebar-background: 225 20% 13%;
+    --sidebar-foreground: 214 50% 98%;
+    --sidebar-primary: 214 79% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 225 12% 19%;
+    --sidebar-accent-foreground: 214 50% 98%;
+    --sidebar-border: 225 12% 19%;
+    --sidebar-ring: 214 79% 51%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-poppins antialiased;
+  }
+
+  /* Lyn CRM - Official Typography (Poppins) */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-poppins font-semibold;
+  }
+}
+
+/* Dashboard-specific stagger animations */
+@layer utilities {
+  .stagger-1 { animation-delay: 0ms; }
+  .stagger-2 { animation-delay: 100ms; }
+  .stagger-3 { animation-delay: 200ms; }
+  .stagger-4 { animation-delay: 300ms; }
+  .stagger-5 { animation-delay: 400ms; }
+  .stagger-6 { animation-delay: 500ms; }
+
+  .animate-stagger {
+    opacity: 0;
+    animation: fade-in-up 0.5s ease-out forwards;
+  }
+
+  @keyframes fade-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

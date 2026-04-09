@@ -1,0 +1,20 @@
+| Sessão | Nome                                                             | Status     |
+| ------ | ---------------------------------------------------------------- | ---------- |
+| 1      | Inicialização do projeto + README                                | ✅         |
+| 2      | Layout visual + rotas de Login/Cadastro                          | ✅         |
+| 3      | Lógica completa de autenticação com Supabase                     | ✅         |
+| 4      | Proteção de rotas + Contexto de sessão                           | ✅         |
+| 4.2    | Confirmação de e-mail antes da criação de perfil                 | ✅         |
+| 5      | AppShell com menu lateral + rotas internas                       | ✅         |
+| 6      | **Kanban de Leads** (como dashboard principal)                   | ✅         |
+| 7      | **Criação e edição de Leads (modal)**                            | ✅         |
+| 8      | **Tabela de Leads (listagem com filtro e ações)**                | ✅         |
+| 9      | **Visual completo do Lead + Conversa (chat e detalhes)**         | ✅  Cursor |
+| 10     | **Tela de Conversas gerais (inbox de leads com conversa ativa)** | ✅         |
+| 11     | Agenda manual (baseada na tabela `agenda`)                       | ✅         |
+| 12     | Relatórios básicos (clientes, funil, leads por estágio)          | ✅         |
+| 13     | Configurações (perfil, empresa, preferências)                    | ✅         |
+| 14     | Integrações com IA/Webhooks (N8N, entrada de leads automática)   | 🔜 futura  |
+| 15     | Deploy final (Vercel, Supabase) + README de entrega              | 🔜 futura  |
+| 16     | Gerenciamento de usuários da empresa (admin/vendedor)            | 🔜 futura  |
+

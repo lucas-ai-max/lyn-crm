@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(pnpm run:*)",
+      "Bash(grep -oE \"^\\\\s+\\\\w+: \\\\{$\" \"/c/Projetos Cursor/Lucas/Lyn CRM/src/integrations/supabase/types.ts\")",
+      "mcp__claude_ai_Supabase__list_projects",
+      "Bash(npx --version)",
+      "Bash(curl -s -X POST https://wdsntvemidqoqrautunn.supabase.co/rest/v1/rpc/exec_sql -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indkc250dmVtaWRxb3FyYXV0dW5uIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTUyOTE4NSwiZXhwIjoyMDkxMTA1MTg1fQ.VRr2RmUR6fRr1QNWOS_aAUS0lB2GZKSkKwx5DwEuUSM' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indkc250dmVtaWRxb3FyYXV0dW5uIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTUyOTE4NSwiZXhwIjoyMDkxMTA1MTg1fQ.VRr2RmUR6fRr1QNWOS_aAUS0lB2GZKSkKwx5DwEuUSM' -H 'Content-Type: application/json' -d '{\"query\": \"SELECT 1 as test\"}')",
+      "Bash(curl -s -X POST https://wdsntvemidqoqrautunn.supabase.co/pg -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indkc250dmVtaWRxb3FyYXV0dW5uIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTUyOTE4NSwiZXhwIjoyMDkxMTA1MTg1fQ.VRr2RmUR6fRr1QNWOS_aAUS0lB2GZKSkKwx5DwEuUSM' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indkc250dmVtaWRxb3FyYXV0dW5uIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTUyOTE4NSwiZXhwIjoyMDkxMTA1MTg1fQ.VRr2RmUR6fRr1QNWOS_aAUS0lB2GZKSkKwx5DwEuUSM' -H 'Content-Type: application/json' -d '{\"query\": \"SELECT version\\(\\)\"}')",
+      "Bash(npm install:*)",
+      "Bash(node setup-db.cjs)",
+      "Bash(node -e ':*)",
+      "Bash(node setup-db-lyn.cjs)",
+      "Bash(node create-pipeline.cjs)",
+      "Bash(node fix-pipeline.cjs)",
+      "Bash(rm fix-pipeline.cjs)",
+      "Bash(node fix-fk.cjs)",
+      "Bash(rm fix-fk.cjs)",
+      "WebSearch",
+      "WebFetch(domain:mcp.composio.dev)",
+      "WebFetch(domain:composio.dev)",
+      "WebFetch(domain:docs.composio.dev)"
+    ],
+    "additionalDirectories": [
+      "c:\\Projetos Cursor\\Lucas\\Lyn CRM Backend\\src",
+      "c:\\Projetos Cursor\\Lucas\\Lyn CRM Backend"
+    ]
+  }
+}

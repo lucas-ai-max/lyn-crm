@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:3001/api/health)",
+      "Bash(curl -s -X POST http://localhost:3001/api/instagram/connect -H \"Content-Type: application/json\" -d '{\"userId\":\"test-user\",\"callbackUrl\":\"http://localhost:8080\"}')",
+      "WebSearch",
+      "WebFetch(domain:docs.composio.dev)",
+      "Bash(curl -s \"http://localhost:3001/api/instagram/accounts?userId=910380b1-2fb0-45cd-897d-c40de7ed04b1\")",
+      "Bash(curl -s -X POST http://localhost:3001/api/instagram/action -H 'Content-Type: application/json' -d '{\"action\":\"INSTAGRAM_LIST_ALL_CONVERSATIONS\",\"userId\":\"910380b1-2fb0-45cd-897d-c40de7ed04b1\",\"params\":{}}')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{content_type}\" \"https://unavatar.io/instagram/amayvellin\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{content_type}\" \"https://unavatar.io/instagram/cbum\")",
+      "WebFetch(domain:developers.facebook.com)",
+      "WebFetch(domain:composio.dev)",
+      "WebFetch(domain:www.sourcecoast.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{redirect_url}\" \"https://backend.composio.dev/api/v3/s/Ypvw-P7c\")",
+      "Bash(curl -s -L -o /dev/null -w \"Step 1: %{http_code} -> %{redirect_url}\\\\n\" \"https://backend.composio.dev/api/v3/s/trT5_0Gx\")",
+      "Bash(curl -s -o /dev/null -w \"%{redirect_url}\" \"https://backend.composio.dev/api/v3/s/trT5_0Gx\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s -X POST https://api.instagram.com/oauth/access_token -F client_id=1330164751528941 -F client_secret=829e79787bd892528186 -F grant_type=authorization_code -F redirect_uri=https://hermes.composio.dev/api/v1/auth-apps/add -F code=AQCmuOKZ_N_RHFwMS4v8Z0iO7R7lXCAexc7yZ06h8379cgPhQL4oxYhJspAwxxBtaLCoDyoab8__OL-59ChVuBt_oB7oSUeci9lHKPjDM-VHFumDVREyo9DSrT_ZsH6U-cAO3UPmKHjceM2fPAhZp4hOMpXssLZTWs3M2FwG3lL9dhhV-4BiiFwAwG-lhfP9TUrf4s-kF6HP9Ds2NJ0Y4I8CLrkxRqicUoz4iMKsJFaOyw)",
+      "Bash(curl -s -X POST https://api.instagram.com/oauth/access_token -F client_id=1330164751528941 -F client_secret=829e79787bd892528186 -F grant_type=authorization_code -F redirect_uri=https://backend.composio.dev/api/v1/auth-apps/add -F code=AQCmuOKZ_N_RHFwMS4v8Z0iO7R7lXCAexc7yZ06h8379cgPhQL4oxYhJspAwxxBtaLCoDyoab8__OL-59ChVuBt_oB7oSUeci9lHKPjDM-VHFumDVREyo9DSrT_ZsH6U-cAO3UPmKHjceM2fPAhZp4hOMpXssLZTWs3M2FwG3lL9dhhV-4BiiFwAwG-lhfP9TUrf4s-kF6HP9Ds2NJ0Y4I8CLrkxRqicUoz4iMKsJFaOyw)",
+      "Bash(curl -s -X POST https://api.instagram.com/oauth/access_token -F client_id=1330164751528941 -F client_secret=829e79787bd892528186 -F grant_type=authorization_code -F redirect_uri=https://backend.composio.dev/api/v1/auth-apps/add -F code=AQAPLb6SfObG00vRVxBsJBuxMETc9nByoQVPMmh6TjAcps3qnwNMV9SiTDPXgrSagegLSZnq0edNb0ReaD_sqm_awfXpRFSz2gwx6zPwuuFrlI4vYlKYc5pCD6GhCn9301eAzQ5hocC3Z6_asFu80rmU5QzKv6)",
+      "WebFetch(domain:status.composio.dev)",
+      "Bash(curl -s -I \"https://backend.composio.dev/api/v3/toolkits/auth/callback?code=test&state=test\")",
+      "WebFetch(domain:nango.dev)",
+      "Bash(curl -s \"https://hermes.composio.dev\" -o /dev/null -w \"hermes status: HTTP %{http_code}\\\\n\")",
+      "Bash(npm install:*)",
+      "Bash(timeout 5 node src/index.js)",
+      "Bash(curl -s -X POST https://api.instagram.com/oauth/access_token -F client_id=1330164751528941 -F client_secret=829e79787bd892528186 -F grant_type=authorization_code -F redirect_uri=https://1f5d-138-97-241-70.ngrok-free.app/api/instagram/callback -F code=AQA70FPnZmTfEBk69RCFzqtvjtdnUHhXLLq_TXeYfR8G_B5J3A4-IIJCkLa0CiLy5nOUKB3aYHg8N5h7y9tgE0vFc8yqe29xYrz8nPmGLRBhV8lVaS8c0hneCvF-i0Y2y_2n1gAaYT1C6I2G_RVjCBCq6RwMlIK5IThKxKfKnGF1Hf-34SNEG05bEFGHfgWMdqU9QNI8FN0nmyGe3XeiFnFteFXcl3kTwjmfzd7F3oNw)",
+      "Bash(curl -s -o /dev/null -w 'HTTP %{http_code}' -H 'ngrok-skip-browser-warning: true' https://1f5d-138-97-241-70.ngrok-free.app/api/health)",
+      "Read(//c/Projetos Cursor/Lucas/Lyn/**)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:elfsight.com)",
+      "WebFetch(domain:chatwoot.help)"
+    ]
+  }
+}

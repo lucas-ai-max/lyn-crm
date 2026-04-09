@@ -1,0 +1,282 @@
+app:
+  name: Vincit AI CRM
+  stack:
+    frontend: [React, Vite, TypeScript, Tailwind, shadcn/ui, Radix UI]
+    state: [TanStack React Query]
+    auth_db: [Supabase]
+  entrypoints:
+    - src/main.tsx
+    - src/App.tsx
+  providers:
+    - QueryClientProvider
+    - TooltipProvider
+    - BrowserRouter
+    - AuthProvider
+  layout:
+    shell: src/components/layout/AppShell.tsx
+    sidebar: src/components/layout/AppSidebar.tsx
+
+routes:
+  public:
+    - path: "/"
+      element: pages/Index.tsx
+      behavior: redirect to "/dashboard" if authenticated else "/login"
+    - path: "/login"
+      guard: PublicRoute
+      element: pages/Login.tsx
+    - path: "/signup"
+      guard: PublicRoute
+      element: pages/Signup.tsx
+    - path: "/verify-email"
+      element: pages/VerifyEmail.tsx
+  private:
+    - path: "/dashboard"
+      guard: PrivateRoute
+      element: AppShell
+      children:
+        - path: ""
+          name: DashboardHome
+          element: pages/dashboard/DashboardHome.tsx
+        - path: "clients"
+          element: pages/dashboard/Clients.tsx
+        - path: "clients/:leadId"
+          element: pages/dashboard/ClientDetails.tsx
+        - path: "conversations"
+          element: pages/dashboard/Conversations.tsx
+        - path: "reports"
+          element: pages/dashboard/Reports.tsx
+        - path: "agenda"
+          element: pages/dashboard/Agenda.tsx
+        - path: "settings"
+          element: pages/dashboard/SettingsPage.tsx
+  fallback:
+    - path: "*"
+      element: pages/NotFound.tsx
+
+guards:
+  PublicRoute:
+    when_loading: spinner
+    if_user: redirect "/dashboard"
+    else: render children
+  PrivateRoute:
+    when_loading: spinner
+    if_not_user: redirect "/login"
+    if_user_without_profile: redirect "/dashboard"
+    else: render children
+
+pages:
+  DashboardHome:
+    components:
+      - KanbanBoard
+      - LeadModal (edit)
+      - Sheet (drawer) with:
+          - LeadDrawerHeader
+          - LeadDetailsPanel
+          - LeadMessagesPanel
+      - AgendaEventModal
+    behaviors:
+      - move_card: update leads.status via Supabase; invalidate ["leads"]
+      - open_drawer: fetch/create conversa by lead_id; fetch responsible profile
+      - messages_panel: polling 5s; insert new messages; auto-scroll
+  Clients:
+    components: [LeadFilters, LeadTable, LeadModal (create/edit)]
+    behaviors:
+      - delete_lead: Supabase delete "leads"; invalidate ["leads"]
+      - save_lead: onSave invalidates ["leads"]
+  ClientDetails:
+    layout: modal_fullscreen_like
+    components: [LeadDetailsPanel, LeadMessagesPanel, LeadModal, AgendaEventModal]
+    behaviors:
+      - edit_lead: LeadModal with initialData from URL leadId
+      - schedule: AgendaEventModal preselected lead
+  Conversations:
+    columns:
+      - left: ConversationList (filter/search/status)
+      - center: ConversationPanel (chat)
+      - right: LeadSummaryPanel (optional)
+    chat:
+      - list_query: conversations filtered
+      - messages_query: ["conversation-messages", conversation.id], polling 5s
+      - send_message: insert into "mensagens"; invalidate same key; auto-scroll
+      - bubble: MessageBubble with alignment/time
+  Agenda:
+    components: [Calendar (react-big-calendar), AgendaEventList, AgendaEventModal]
+    behaviors:
+      - events_query: ["agenda-events", user.id]
+      - create_or_update_event: insert/update "agenda"; invalidate ["agenda-events"]
+      - delete_event: delete "agenda"; invalidate ["agenda-events"]
+  Settings:
+    note: página extensa com formulários (não detalhada aqui)
+
+components:
+  shared_ui:
+    - dialog, sheet, sidebar, select, calendar, textarea, input, button, toast, tooltip
+  leads:
+    - LeadModal: create/edit lead, status from profiles.status_type
+    - LeadDetailsPanel: visualização e atualização parcial do lead
+    - KanbanBoard: arrastar status
+  conversations:
+    - ConversationList, ConversationItem
+    - ConversationPanel: header com AvatarFallback; input Enter-to-send; polling 5s
+    - MessageBubble: estilos distintos por remetente
+    - LeadSummaryPanel
+    - LeadMessagesPanel: variação usada em DashboardHome/ClientDetails
+
+auth:
+  context: src/contexts/AuthContext.tsx
+  services: src/services/auth.ts
+  flows:
+    signup:
+      - supabase.auth.signUp(email, password, redirectTo /login)
+      - toast e redirect /verify-email
+    login:
+      - supabase.auth.signInWithPassword
+      - check profile; if missing -> /dashboard; else -> /dashboard
+    create_profile:
+      - insert profiles; set hasProfile; redirect /dashboard
+    logout:
+      - supabase.auth.signOut(); redirect /login
+  listeners:
+    - onAuthStateChange: atualiza session/user e checa profile
+    - getSession on mount
+
+react_query:
+  keys:
+    - ["leads"]
+    - ["conversation", viewingLeadId]
+    - ["responsible-user", lead.responsavel_id]
+    - ["conversation-messages", conversation.id]
+    - ["messages", conversationId] # usado em LeadMessagesPanel
+    - ["agenda-events", user.id]
+  polling:
+    - messages: 5000ms
+  invalidations:
+    - after send_message: invalidate ["conversation-messages", conversation.id] (ou ["messages", id])
+    - after save/delete lead: invalidate ["leads"]
+    - after update lead details: invalidate ["leads"] ou ["lead", leadId]
+    - after agenda save/delete: invalidate ["agenda-events"]
+
+data_model:
+  entities:
+    leads:
+      fields: [id, nome, email?, telefone?, origem_empresa?, segmento?, prioridade, status, responsavel_id, notas?, created_at]
+    conversas:
+      fields: [id, lead_id, canal, created_at]
+    mensagens:
+      fields_atuais_ui: [id, conversa_id, remetente_id, texto, created_at]
+      fields_novos_migration: [incoming, body, media_base64, media_type, message_id, timestamp]
+      observacao: UI ainda usa "texto/created_at" enquanto migration adicionou "body/timestamp/incoming/media_*"
+    agenda:
+      fields: [id, user_id, descricao, data, lead_id]
+    profiles:
+      fields: [id, first_name, last_name, company_name, status_type[]]
+    historico_atendimentos:
+      fields: [... não detalhados no UI atual]
+  relations:
+    - leads.id -> conversas.lead_id (1:N)
+    - conversas.id -> mensagens.conversa_id (1:N)
+    - profiles.id -> leads.responsavel_id (1:N)
+    - profiles.id -> agenda.user_id (1:N)
+    - leads.id -> agenda.lead_id (1:N)
+
+flows:
+  authentication:
+    - app_load: getSession + onAuthStateChange
+    - redirect_rules:
+        - not_authenticated: "/login"
+        - authenticated_no_profile: "/dashboard"
+        - authenticated_with_profile: "/dashboard"
+  dashboard_home_drawer:
+    - click_lead: set viewingLeadId
+    - ensure_conversation: select conversas by lead_id; if missing, insert { canal: "whatsapp" }
+    - load_responsible: select profiles by lead.responsavel_id
+    - render: LeadDetailsPanel + LeadMessagesPanel
+  send_message:
+    - preconditions: user.id && newMessage.trim && not isSending
+    - action: insert into "mensagens" ({ conversa_id, remetente_id, texto })
+    - post: clear input; invalidate messages query; auto-scroll; toast
+  conversations_page:
+    - select_conversation: updates selectedConversationId
+    - polling_messages: refetch every 5s
+    - show_details: toggles LeadSummaryPanel
+  agenda_crud:
+    - open_modal: AgendaEventModal (create/edit); fetch leads for select
+    - save: compute datetime; insert/update "agenda"
+    - delete: confirm alert-dialog; delete "agenda"
+    - post: invalidate ["agenda-events"], close modal
+  leads_crud:
+    - create/update via LeadModal
+    - post: invalidate ["leads"]; close modal
+  kanban:
+    - drag_status: update leads.status; toast; invalidate ["leads"]
+
+sidebar:
+  menu_items:
+    - Dashboard: /dashboard
+    - Clientes: /dashboard/clients
+    - Conversas: /dashboard/conversations
+    - Relatórios: /dashboard/reports
+    - Agenda: /dashboard/agenda
+    - Configurações: /dashboard/settings
+  quick_actions:
+    - Adicionar Cliente: abre LeadModal (mode=create)
+    - Theme toggle: alterna dark/light
+    - Logout: signOut()
+
+risks_recommendations:
+  - mensagens_schema_alignment:
+      issue: UI usa "texto/created_at"; migrations introduzem "body/timestamp/incoming/media_*"
+      recommendation: padronizar UI para "body/timestamp" e suportar mídia
+  - leads_last_message_performance:
+      issue: useLeads faz N+1 para última mensagem
+      recommendation: criar view/RPC agregada (max(created_at) por lead) e buscar em um único select
+  - supabase_key_visibility:
+      issue: client.ts contém chave pública; verificar se não é service role; revisar políticas RLS
+      recommendation: validar permissões e mover segredos sensíveis para env quando necessário
+  - query_optimization:
+      issue: selects amplos com "*"
+      recommendation: reduzir colunas via select específico; ajustar cacheTime/staleTime
+  - events_duration:
+      issue: duração fixa 1h na Agenda
+      recommendation: adicionar campo de duração ou end time
+  - status_types_source:
+      issue: LeadModal depende de profiles.status_type
+      recommendation: fallback robusto e UI para editar estágios nas settings
+
+files_index:
+  routing_layout:
+    - src/App.tsx
+    - src/components/layout/AppShell.tsx
+    - src/components/layout/AppSidebar.tsx
+    - src/components/auth/PrivateRoute.tsx
+    - src/components/auth/PublicRoute.tsx
+  core_pages:
+    - src/pages/dashboard/DashboardHome.tsx
+    - src/pages/dashboard/Clients.tsx
+    - src/pages/dashboard/ClientDetails.tsx
+    - src/pages/dashboard/Conversations.tsx
+    - src/pages/dashboard/Agenda.tsx
+    - src/pages/dashboard/Reports.tsx
+    - src/pages/dashboard/SettingsPage.tsx
+  chat_components:
+    - src/components/dashboard/conversations/ConversationPanel.tsx
+    - src/components/dashboard/conversations/ConversationList.tsx
+    - src/components/dashboard/conversations/ConversationItem.tsx
+    - src/components/dashboard/conversations/MessageBubble.tsx
+    - src/components/dashboard/conversations/LeadSummaryPanel.tsx
+    - src/components/dashboard/LeadMessagesPanel.tsx
+  leads_components:
+    - src/components/dashboard/KanbanBoard.tsx
+    - src/components/dashboard/LeadModal.tsx
+    - src/components/dashboard/LeadDetailsPanel.tsx
+    - src/hooks/useLeads.ts
+  agenda_components:
+    - src/components/dashboard/agenda/AgendaEventModal.tsx
+  auth_services:
+    - src/contexts/AuthContext.tsx
+    - src/services/auth.ts
+  supabase:
+    - src/services/supabase.ts
+    - src/integrations/supabase/client.ts
+    - src/integrations/supabase/types.ts
+    - supabase/migrations/*.sql

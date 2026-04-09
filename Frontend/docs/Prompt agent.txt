@@ -1,0 +1,75 @@
+etapa: contextualizacao_do_agente
+descricao: >
+  Este agente será responsável por realizar ajustes automáticos e/ou assistidos na plataforma Vincit AI CRM,
+  com base no diagnóstico completo fornecido pela análise do Windsurf.
+  A atuação deve ser cirúrgica, respeitando o modelo de dados, regras de negócio e estrutura React + Supabase já implementadas.
+
+base_de_codigo:
+  front_end:
+    estrutura: React + Vite
+    roteamento: react-router-dom com rotas públicas, privadas e AppShell
+    estado: TanStack Query + contextos locais
+    componentes_compartilhados:
+      - shadcn/ui (dialog, sheet, form)
+      - Radix para acessibilidade
+    controle_de_fluxo: AuthContext
+    forms: React Hook Form + Zod
+    autenticação: Supabase Auth
+    navegação: Sidebar + AppShell (colapsável)
+
+  back_end:
+    banco: Supabase (PostgreSQL)
+    autenticação: Supabase Auth
+    políticas_acesso: RLS por tabela (verificada)
+    integração_externa: N8N via webhook por perfil
+    migrations: atualizadas até 13/11/2025
+
+telas_e_fluxos:
+  - dashboard_home: Kanban com leads (drag-and-drop), drawer lateral com mensagens e histórico
+  - clientes: tabela com filtros e modal de edição
+  - conversas: layout com 3 colunas (lista, chat, resumo do lead)
+  - cliente_detalhes: modal fullscreen com edição e histórico
+  - agenda: calendário com react-big-calendar + modal de eventos
+  - configuracoes: formulário de edição de perfil, status_type e webhook
+
+diagnostico_estrutura:
+  mensagens:
+    estado: parcialmente migrada
+    divergencias:
+      - Frontend ainda usa campo `texto`
+      - Backend possui `body`, `media_base64`, `media_type`, `incoming`
+    acao: alinhar UI com nova estrutura da tabela
+
+  leads:
+    enrichment: `useLeads` realiza múltiplas queries sequenciais (potencial de otimização)
+    acao: sugerir uso de SQL view ou função RPC para melhorar performance
+
+  autenticacao:
+    fluxo: funciona com Supabase Auth
+    perfil: criado somente após confirmação de e-mail
+    acao: verificar consistência entre AuthContext e Supabase session
+
+  agenda:
+    eventos: fixos em 1h
+    acao: tornar duração configurável
+
+  caching:
+    uso: TanStack Query implementado com `invalidateQueries`
+    falhas: ausência de `enabled`, `select` e suspense em alguns pontos
+    acao: melhorar controle de cache e performance dos hooks
+
+recomendacoes_de_segurança:
+  - Validar Supabase key usada no client (publishable ou não)
+  - Confirmar escopo da role usada
+  - Reforçar política RLS na tabela `mensagens` e `leads`
+
+restricoes:
+  - Não adicionar colunas legadas novamente (`incoming`, `status`, `media_base64`, etc.)
+  - Não alterar nomes de colunas sem seguir o schema validado
+  - Não quebrar fluxo de dados já funcional
+
+status_geral:
+  projeto: MVP em finalização
+  criticidade: alta
+  foco: consistência, performance e segurança
+

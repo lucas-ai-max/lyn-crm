@@ -1,0 +1,177 @@
+/* Chat Specific Styles */
+
+/* Base Container */
+.chat-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    /* Critical for flex scrolling */
+    position: relative !important;
+    background-image: url('/chat-bg-doodle.png');
+    /* Optional doodle background if available, or just fallback color */
+    background-color: hsl(var(--chat-bg));
+    background-blend-mode: overlay;
+}
+
+/* Chat Messages Area - The Scrollable Part */
+.chat-scroll-area {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 1rem !important;
+    scroll-behavior: smooth;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-scroll-content {
+    display: flex;
+    flex-direction: column;
+    /* justify-content: flex-end; Removed to prevent scroll clipping */
+
+    min-height: 100%;
+    gap: 2px;
+    /* Close grouping for same sender usually */
+}
+
+/* Message Groups (different senders) */
+.message-group {
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Message Bubble Base */
+.message-bubble {
+    position: relative;
+    border-radius: 7.5px;
+    padding: 6px 7px 8px 9px;
+    max-width: 65%;
+    font-size: 14.2px;
+    line-height: 19px;
+    color: #111b21;
+    box-shadow: 0 1px 0.5px rgba(11, 20, 26, .13);
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+/* Sent vs Received Styles */
+.message-bubble.sent {
+    background-color: hsl(var(--bubble-sent));
+    /* WhatsApp Green */
+    align-self: flex-end;
+    border-top-right-radius: 0;
+}
+
+.message-bubble.received {
+    background-color: hsl(var(--bubble-received));
+    align-self: flex-start;
+    border-top-left-radius: 0;
+}
+
+/* Dark Mode Overrides */
+.dark .message-bubble {
+    color: #e9edef;
+    box-shadow: 0 1px 0.5px rgba(0, 0, 0, .13);
+}
+
+.dark .message-bubble.sent {
+    background-color: #005c4b;
+}
+
+.dark .message-bubble.received {
+    background-color: #202c33;
+}
+
+/* Metadata (Time + Ticks) */
+.message-meta {
+    /* display: inline-block; */
+    vertical-align: bottom;
+    margin-left: 9px;
+    /* Space between text and time */
+    margin-bottom: -4px;
+    /* Align slightly lower */
+    font-size: 11px;
+
+    color: rgba(17, 27, 33, 0.5);
+    /* #667781 */
+    line-height: 15px;
+    user-select: none;
+    white-space: nowrap;
+    float: right;
+    height: 15px;
+}
+
+.dark .message-meta {
+    color: rgba(233, 237, 239, 0.6);
+}
+
+.message-ticks {
+    /* display: inline-block; */
+    margin-left: 3px;
+}
+
+
+.message-ticks svg {
+    width: 16px;
+    height: 11px;
+    /* Visual balance */
+}
+
+.tick-read {
+    color: #53bdeb;
+    /* Blue ticks */
+}
+
+.tick-sent {
+    color: rgba(17, 27, 33, 0.3);
+    /* Grey ticks */
+}
+
+.dark .tick-sent {
+    color: rgba(233, 237, 239, 0.4);
+}
+
+/* Date Separator */
+.date-separator {
+    text-align: center;
+    margin: 12px 0;
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.date-badge {
+    background-color: #ffffff;
+    color: #54656f;
+    font-size: 12.5px;
+    padding: 5px 12px 6px;
+    border-radius: 7.5px;
+    box-shadow: 0 1px 0.5px rgba(11, 20, 26, .13);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.dark .date-badge {
+    background-color: #182229;
+    color: #8696a0;
+    box-shadow: 0 1px 0.5px rgba(0, 0, 0, .13);
+    text-shadow: none;
+}
+
+/* New Message Badge */
+.unread-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(31, 44, 52, 0.08);
+    /* Faint stripe */
+    padding: 10px 0;
+    margin: 12px 0;
+    font-size: 12.5px;
+    color: #54656f;
+    font-weight: 500;
+    text-transform: uppercase;
+}
