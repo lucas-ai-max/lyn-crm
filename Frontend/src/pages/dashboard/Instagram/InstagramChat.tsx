@@ -30,11 +30,28 @@ interface Message {
   created_time?: string;
 }
 
-function IgAvatar({ username, size = "h-10 w-10" }: { username: string; size?: string }) {
-  const [error, setError] = useState(false);
-  const initial = username.charAt(0).toUpperCase();
+// Cache de URLs de avatar para evitar rate limit do unavatar.io
+const avatarCache = new Map<string, string | null>();
 
-  if (error || !username) {
+function IgAvatar({ username, size = "h-10 w-10" }: { username: string; size?: string }) {
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+  const initial = (username || "?").charAt(0).toUpperCase();
+
+  useState(() => {
+    if (!username || username === "Conversa") return;
+    if (avatarCache.has(username)) {
+      const cached = avatarCache.get(username);
+      if (cached) setImgUrl(cached);
+      else setError(true);
+      return;
+    }
+    const url = `https://unavatar.io/instagram/${username}`;
+    avatarCache.set(username, url);
+    setImgUrl(url);
+  });
+
+  if (error || !imgUrl || !username || username === "Conversa") {
     return (
       <div className={`${size} rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center text-white font-bold text-sm shrink-0`}>
         {initial}
@@ -44,9 +61,10 @@ function IgAvatar({ username, size = "h-10 w-10" }: { username: string; size?: s
 
   return (
     <img
-      src={`https://unavatar.io/instagram/${username}`}
+      src={imgUrl}
       alt={username}
-      onError={() => setError(true)}
+      loading="lazy"
+      onError={() => { setError(true); avatarCache.set(username, null); }}
       className={`${size} rounded-full object-cover shrink-0`}
     />
   );
@@ -55,68 +73,102 @@ function IgAvatar({ username, size = "h-10 w-10" }: { username: string; size?: s
 export default function InstagramChat() {
   const { user, companyId } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [allConvos, setAllConvos] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedConvo, setSelectedConvo] = useState<Conversation | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [loadingConvos, setLoadingConvos] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [pageId, setPageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const convoListRef = useRef<HTMLDivElement>(null);
   const configured = true;
+  const BATCH_SIZE = 10;
 
   const cid = companyId || user?.id || "default";
 
   useEffect(() => {
     if (!configured) { setLoadingConvos(false); return; }
+
     (async () => {
-      // Fetch page info first so we know which ID is "us"
       const info = await getPageInfo(cid).catch(() => null);
       const myPageId = info?.pageId || null;
       if (myPageId) setPageId(myPageId);
       await fetchConversations(myPageId);
     })();
+
+    // Poll every 15 seconds for new conversations (silent)
+    const interval = setInterval(() => {
+      refreshConversations();
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, [cid]);
+
+  // Refresh messages of selected conversation every 5s
+  useEffect(() => {
+    if (!selectedConvo) return;
+    const interval = setInterval(() => {
+      getConversationMessages(cid, selectedConvo.id)
+        .then((result) => {
+          const msgs = result?.data?.data || result?.data || [];
+          setMessages(msgs);
+        })
+        .catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [selectedConvo?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Scroll handler for infinite loading
+  const handleConvoScroll = () => {
+    const el = convoListRef.current;
+    if (!el || loadingMore) return;
+    // Load more when scrolled near bottom
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 100) {
+      loadMoreConversations();
+    }
+  };
+
+  const enrichConvos = async (convos: Conversation[], knownPageId: string | null) => {
+    return Promise.all(
+      convos.map(async (convo) => {
+        if (convo.participantName) return convo;
+        try {
+          const msgResult = await getConversationMessages(cid, convo.id);
+          const msgs = msgResult?.data?.data || msgResult?.data || [];
+          if (msgs.length > 0) {
+            const firstMsg = msgs[0];
+            const sender = firstMsg.from_ || firstMsg.from;
+            const recipient = firstMsg.to?.data?.[0];
+            const otherUser = sender?.id === knownPageId ? recipient : sender;
+            return {
+              ...convo,
+              participantName: otherUser?.username || "Conversa",
+              snippet: firstMsg.message || convo.snippet,
+            };
+          }
+        } catch {}
+        return convo;
+      })
+    );
+  };
 
   const fetchConversations = async (myPageId?: string | null) => {
     try {
       setLoadingConvos(true);
       const result = await listConversations(cid);
       const convos: Conversation[] = result?.data?.data || result?.data || [];
-      const knownPageId = myPageId || pageId;
+      setAllConvos(convos);
 
-      // Fetch first message of each conversation to get participant names
-      const enriched = await Promise.all(
-        convos.map(async (convo) => {
-          try {
-            const msgResult = await getConversationMessages(cid, convo.id);
-            const msgs = msgResult?.data?.data || msgResult?.data || [];
-            if (msgs.length > 0) {
-              const firstMsg = msgs[0];
-              const sender = firstMsg.from_ || firstMsg.from;
-              const recipient = firstMsg.to?.data?.[0];
-
-              // The other person is whoever is NOT our page
-              const otherUser =
-                sender?.id === knownPageId ? recipient : sender;
-
-              return {
-                ...convo,
-                participantName: otherUser?.username || "Conversa",
-                snippet: firstMsg.message || convo.snippet,
-              };
-            }
-          } catch {
-            // ignore — show conversation without name
-          }
-          return convo;
-        })
-      );
-
+      // Enrich only first batch
+      const firstBatch = convos.slice(0, BATCH_SIZE);
+      const enriched = await enrichConvos(firstBatch, myPageId || pageId);
       setConversations(enriched);
     } catch (err: any) {
       console.error("Error fetching conversations:", err);
@@ -125,12 +177,55 @@ export default function InstagramChat() {
     }
   };
 
+  const loadMoreConversations = async () => {
+    const loaded = conversations.length;
+    if (loaded >= allConvos.length) return;
+
+    setLoadingMore(true);
+    const nextBatch = allConvos.slice(loaded, loaded + BATCH_SIZE);
+    const enriched = await enrichConvos(nextBatch, pageId);
+    setConversations((prev) => [...prev, ...enriched]);
+    setLoadingMore(false);
+  };
+
+  const refreshConversations = async () => {
+    try {
+      const result = await listConversations(cid);
+      const convos: Conversation[] = result?.data?.data || result?.data || [];
+      setAllConvos(convos);
+      // Only update existing enriched ones, don't re-enrich
+      setConversations((prev) => {
+        const prevMap = new Map(prev.map((c) => [c.id, c]));
+        return prev.map((c) => {
+          const updated = convos.find((nc) => nc.id === c.id);
+          return updated ? { ...c, updated_time: updated.updated_time } : c;
+        });
+      });
+    } catch {}
+  };
+
   const fetchMessages = async (convo: Conversation) => {
     try {
       setLoadingMessages(true);
       setSelectedConvo(convo);
       const result = await getConversationMessages(cid, convo.id);
-      setMessages(result?.data?.data || result?.data || []);
+      const msgs = result?.data?.data || result?.data || [];
+      setMessages(msgs);
+
+      // Enrich conversation with participant name from first message
+      if (msgs.length > 0 && !convo.participantName) {
+        const firstMsg = msgs[0];
+        const sender = firstMsg.from_ || firstMsg.from;
+        const recipient = firstMsg.to?.data?.[0];
+        const knownPageId = pageId;
+        const otherUser = sender?.id === knownPageId ? recipient : sender;
+        const name = otherUser?.username || "Conversa";
+
+        setConversations((prev) =>
+          prev.map((c) => c.id === convo.id ? { ...c, participantName: name, snippet: firstMsg.message } : c)
+        );
+        setSelectedConvo({ ...convo, participantName: name });
+      }
     } catch (err: any) {
       toast.error("Erro ao carregar mensagens");
     } finally {
@@ -211,7 +306,7 @@ export default function InstagramChat() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto" ref={convoListRef} onScroll={handleConvoScroll}>
           {loadingConvos ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -238,12 +333,19 @@ export default function InstagramChat() {
                 <IgAvatar username={getParticipantName(convo)} />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{getParticipantName(convo)}</p>
-                  {convo.snippet && (
-                    <p className="text-xs text-muted-foreground truncate">{convo.snippet}</p>
-                  )}
+                  <p className="text-xs text-muted-foreground truncate">
+                    {convo.snippet || (convo.updated_time
+                      ? new Date(convo.updated_time).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+                      : "")}
+                  </p>
                 </div>
               </div>
             ))
+          )}
+          {loadingMore && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
           )}
         </div>
       </div>

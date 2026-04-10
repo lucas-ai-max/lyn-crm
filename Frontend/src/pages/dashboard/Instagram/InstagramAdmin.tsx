@@ -49,8 +49,9 @@ export default function InstagramAdmin() {
   const handleConnect = async () => {
     try {
       setConnecting(true);
-      const result = await initiateInstagramConnection(cid);
-      const redirectUrl = result?.redirect_url;
+      const callbackUrl = window.location.origin + window.location.pathname;
+      const result = await initiateInstagramConnection(cid, callbackUrl);
+      const redirectUrl = result?.redirectUrl || result?.redirect_url;
       if (redirectUrl) {
         window.location.href = redirectUrl;
       } else {
@@ -63,10 +64,10 @@ export default function InstagramAdmin() {
     }
   };
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = async (accountId: string) => {
     if (!confirm("Desconectar esta conta do Instagram?")) return;
     try {
-      await deleteConnectedAccount(cid);
+      await deleteConnectedAccount(accountId);
       toast.success("Conta desconectada");
       fetchAccounts();
     } catch (err: any) {
@@ -77,15 +78,24 @@ export default function InstagramAdmin() {
   // Check if returning from OAuth callback
   useEffect(() => {
     const url = new URL(window.location.href);
-    const status = url.searchParams.get("status");
-    const error = url.searchParams.get("error");
-    if (status) {
-      if (status === "success") {
+    const isCallback =
+      url.searchParams.has("status") ||
+      url.searchParams.has("connectedAccountId") ||
+      url.searchParams.has("code");
+    if (isCallback) {
+      const status = url.searchParams.get("status");
+      if (status === "success" || url.searchParams.has("connectedAccountId")) {
         toast.success("Conta conectada com sucesso!");
       } else if (status === "failed") {
-        toast.error(error ? decodeURIComponent(error) : "Falha ao conectar conta do Instagram");
+        toast.error("Falha ao conectar conta do Instagram");
       }
       // Clean URL
+      url.searchParams.delete("status");
+      url.searchParams.delete("connectedAccountId");
+      url.searchParams.delete("appName");
+      url.searchParams.delete("code");
+      url.searchParams.delete("error");
+      url.hash = "";
       window.history.replaceState({}, "", url.pathname);
       fetchAccounts();
     }
@@ -145,7 +155,7 @@ export default function InstagramAdmin() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleDisconnect}
+                  onClick={() => handleDisconnect(account.id)}
                 >
                   <Unlink className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                 </Button>

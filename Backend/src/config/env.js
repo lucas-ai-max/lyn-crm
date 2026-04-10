@@ -8,15 +8,13 @@ export const config = {
     serviceKey: process.env.SUPABASE_SERVICE_KEY,
   },
 
-  // Instagram Direct API
-  instagram: {
-    appId: process.env.INSTAGRAM_APP_ID,
-    appSecret: process.env.INSTAGRAM_APP_SECRET,
-    redirectUri: process.env.INSTAGRAM_REDIRECT_URI,
+  // Composio (Instagram)
+  composio: {
+    apiKey: process.env.COMPOSIO_API_KEY,
+    instagramAuthConfigId: process.env.COMPOSIO_INSTAGRAM_AUTH_CONFIG_ID,
+    baseUrlV2: "https://backend.composio.dev/api/v2",
+    baseUrlV3: "https://backend.composio.dev/api/v3",
   },
-
-  // Frontend URL (para redirect apos OAuth)
-  frontendUrl: process.env.FRONTEND_URL || "http://localhost:8080",
 
   // Evolution API (WhatsApp)
   evolution: {

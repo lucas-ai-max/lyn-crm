@@ -1,11 +1,11 @@
-// Instagram via Facebook Login for Business
-// O token do Facebook funciona com a Messaging API do Instagram
+// Instagram Graph API — leitura de DMs via token IGAAS (Instagram Login)
+// Envio desabilitado até App Review da Meta aprovar Advanced Access
 import crypto from "crypto";
 import { config } from "../config/env.js";
 import { supabase } from "../config/supabase.js";
 
 const { appId, appSecret, redirectUri } = config.instagram;
-const FB = "https://graph.facebook.com/v25.0";
+const IG = "https://graph.instagram.com/v25.0";
 
 // === OAuth State Management ===
 const pendingOAuth = new Map();
@@ -14,7 +14,6 @@ export function getOAuthUrl(companyId) {
   const nonce = crypto.randomUUID();
   pendingOAuth.set(nonce, { companyId, createdAt: Date.now() });
 
-  // Limpa entradas antigas (>10 min)
   for (const [key, val] of pendingOAuth) {
     if (Date.now() - val.createdAt > 10 * 60 * 1000) pendingOAuth.delete(key);
   }
@@ -23,10 +22,10 @@ export function getOAuthUrl(companyId) {
     client_id: appId,
     redirect_uri: redirectUri,
     response_type: "code",
-    scope: "instagram_basic,instagram_manage_messages,pages_show_list",
+    scope: "instagram_business_basic,instagram_business_manage_messages",
     state: nonce,
   });
-  return `https://www.facebook.com/v25.0/dialog/oauth?${params}`;
+  return `https://www.instagram.com/oauth/authorize?${params}`;
 }
 
 export async function handleCallback(code, state) {
@@ -35,65 +34,46 @@ export async function handleCallback(code, state) {
   const { companyId } = entry;
   pendingOAuth.delete(state);
 
-  // 1. Troca code por Facebook User token
-  console.log("[instagram] Exchanging code for Facebook token...");
-  const tokenRes = await fetch(
-    `${FB}/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${code}`
-  );
-  const tokenData = await tokenRes.json();
-  if (tokenData.error) throw new Error(tokenData.error.message);
-  const userToken = tokenData.access_token;
-  console.log("[instagram] Facebook user token obtained");
+  // Troca code por token
+  const form = new URLSearchParams({
+    client_id: appId,
+    client_secret: appSecret,
+    grant_type: "authorization_code",
+    redirect_uri: redirectUri,
+    code,
+  });
 
-  // 2. Get long-lived user token
-  console.log("[instagram] Exchanging for long-lived token...");
-  const longRes = await fetch(
-    `${FB}/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${userToken}`
-  );
-  const longData = await longRes.json();
-  const longToken = longData.access_token || userToken;
-  const expiresIn = longData.expires_in || 3600;
-  console.log("[instagram] Long-lived token:", longData.error ? "failed, using short" : "ok");
+  const res = await fetch("https://api.instagram.com/oauth/access_token", {
+    method: "POST",
+    body: form,
+  });
+  const data = await res.json();
+  if (data.error_message) throw new Error(data.error_message);
 
-  // 3. Get Facebook Pages with Instagram Business Account
-  console.log("[instagram] Fetching pages...");
-  const pagesRes = await fetch(
-    `${FB}/me/accounts?fields=id,name,access_token,instagram_business_account{id,username,name,profile_picture_url}&access_token=${longToken}`
-  );
-  const pagesData = await pagesRes.json();
-  if (pagesData.error) throw new Error(pagesData.error.message);
+  const accessToken = data.data?.[0]?.access_token || data.access_token;
+  const userId = data.data?.[0]?.user_id || data.user_id;
+  if (!accessToken) throw new Error("Falha ao obter token");
 
-  // Find the page with an Instagram Business account
-  const pages = pagesData.data || [];
-  let pageToken = null;
-  let igAccount = null;
+  // Busca perfil
+  let profile = {};
+  try {
+    const profileRes = await fetch(`${IG}/me?fields=user_id,username,name,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`);
+    profile = await profileRes.json();
+  } catch {}
 
-  for (const page of pages) {
-    if (page.instagram_business_account) {
-      pageToken = page.access_token;
-      igAccount = page.instagram_business_account;
-      console.log(`[instagram] Found IG account: @${igAccount.username} via page "${page.name}"`);
-      break;
-    }
-  }
+  const igUsername = profile.username || String(userId);
 
-  if (!igAccount || !pageToken) {
-    throw new Error("Nenhuma conta Instagram Business vinculada a uma Facebook Page encontrada. Vincule sua conta Instagram a uma Pagina no Facebook.");
-  }
-
-  // 4. Salva no Supabase
-  const tokenExpiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+  // Salva no Supabase
   const igConfig = {
-    access_token: pageToken, // Page token nao expira enquanto o user token for valido
-    ig_user_id: igAccount.id,
-    ig_username: igAccount.username,
-    ig_name: igAccount.name || null,
-    ig_profile_pic: igAccount.profile_picture_url || null,
-    token_expires_at: tokenExpiresAt,
+    access_token: accessToken,
+    ig_user_id: String(profile.user_id || userId),
+    ig_username: igUsername,
+    ig_name: profile.name || null,
+    ig_profile_pic: profile.profile_picture_url || null,
+    token_expires_at: new Date(Date.now() + 3600 * 1000).toISOString(),
     connected_at: new Date().toISOString(),
   };
 
-  // Upsert na lyn_integration_instances
   const { data: existing } = await supabase
     .from("lyn_integration_instances")
     .select("id")
@@ -104,7 +84,7 @@ export async function handleCallback(code, state) {
   if (existing) {
     await supabase
       .from("lyn_integration_instances")
-      .update({ config: igConfig, status: "active", name: `@${igAccount.username}`, external_instance_id: igAccount.id })
+      .update({ config: igConfig, status: "active", name: `@${igUsername}`, external_instance_id: igConfig.ig_user_id })
       .eq("id", existing.id);
   } else {
     await supabase.from("lyn_integration_instances").insert({
@@ -112,12 +92,12 @@ export async function handleCallback(code, state) {
       provider: "instagram",
       config: igConfig,
       status: "active",
-      name: `@${igAccount.username}`,
-      external_instance_id: igAccount.id,
+      name: `@${igUsername}`,
+      external_instance_id: igConfig.ig_user_id,
     });
   }
 
-  // Upsert na lyn_integrations
+  // Upsert lyn_integrations
   const { data: instance } = await supabase
     .from("lyn_integration_instances")
     .select("id")
@@ -125,29 +105,21 @@ export async function handleCallback(code, state) {
     .eq("provider", "instagram")
     .single();
 
-  const { data: existingIntegration } = await supabase
+  const { data: existingInt } = await supabase
     .from("lyn_integrations")
     .select("id")
     .eq("company_id", companyId)
     .eq("type", "instagram")
     .maybeSingle();
 
-  if (existingIntegration) {
-    await supabase
-      .from("lyn_integrations")
-      .update({ active: true, instance_id: instance.id })
-      .eq("id", existingIntegration.id);
+  if (existingInt) {
+    await supabase.from("lyn_integrations").update({ active: true, instance_id: instance.id }).eq("id", existingInt.id);
   } else {
-    await supabase.from("lyn_integrations").insert({
-      company_id: companyId,
-      type: "instagram",
-      instance_id: instance.id,
-      active: true,
-    });
+    await supabase.from("lyn_integrations").insert({ company_id: companyId, type: "instagram", instance_id: instance.id, active: true });
   }
 
-  console.log(`[instagram] Conta @${igAccount.username} conectada para company ${companyId}`);
-  return { igUserId: igAccount.id, igUsername: igAccount.username };
+  console.log(`[instagram] Conta @${igUsername} conectada para company ${companyId}`);
+  return { igUserId: igConfig.ig_user_id, igUsername };
 }
 
 // === Token Management ===
@@ -157,7 +129,7 @@ async function getTokenForCompany(companyId) {
   const cached = tokenCache.get(companyId);
   if (cached && Date.now() - cached.fetchedAt < 5 * 60 * 1000) return cached;
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("lyn_integration_instances")
     .select("config")
     .eq("company_id", companyId)
@@ -165,95 +137,49 @@ async function getTokenForCompany(companyId) {
     .eq("status", "active")
     .maybeSingle();
 
-  if (error || !data?.config?.access_token) return null;
+  if (!data?.config?.access_token) return null;
 
   const c = data.config;
   const tokenData = {
     accessToken: c.access_token,
     igUserId: c.ig_user_id,
     igUsername: c.ig_username,
-    tokenExpiresAt: c.token_expires_at,
     fetchedAt: Date.now(),
   };
-
   tokenCache.set(companyId, tokenData);
   return tokenData;
 }
 
-async function authFetch(companyId, url, options = {}) {
-  const token = await getTokenForCompany(companyId);
-  if (!token) throw new Error("Instagram nao conectado. Conecte em Instagram Admin.");
-
-  const separator = url.includes("?") ? "&" : "?";
-  const fullUrl = `${url}${separator}access_token=${token.accessToken}`;
-
-  const res = await fetch(fullUrl, {
-    ...options,
-    headers: { "Content-Type": "application/json", ...options.headers },
-  });
-  const data = await res.json();
-
-  if (!res.ok) {
-    if (data?.error?.code === 190) {
-      tokenCache.delete(companyId);
-      await supabase
-        .from("lyn_integration_instances")
-        .update({ status: "error" })
-        .eq("company_id", companyId)
-        .eq("provider", "instagram");
-      throw new Error("Token do Instagram expirado. Reconecte em Instagram Admin.");
-    }
-    throw new Error(data?.error?.message || JSON.stringify(data));
-  }
-  return data;
-}
-
-// === Graph API Calls (via Facebook Graph API) ===
-
-export async function sendTextMessage(companyId, recipientId, text) {
-  const token = await getTokenForCompany(companyId);
-  if (!token) throw new Error("Instagram nao conectado.");
-
-  return authFetch(companyId, `${FB}/${token.igUserId}/messages`, {
-    method: "POST",
-    body: JSON.stringify({
-      recipient: { id: recipientId },
-      message: { text },
-    }),
-  });
-}
+// === Graph API Calls (graph.instagram.com) ===
 
 export async function listConversations(companyId) {
   const token = await getTokenForCompany(companyId);
   if (!token) throw new Error("Instagram nao conectado.");
 
-  return authFetch(companyId, `${FB}/${token.igUserId}/conversations?fields=id,participants,updated_time&platform=instagram`);
+  const res = await fetch(`${IG}/me/conversations?platform=instagram&access_token=${token.accessToken}`);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data;
 }
 
 export async function getConversationMessages(companyId, conversationId) {
-  // 1. Get message IDs
-  const convo = await authFetch(companyId, `${FB}/${conversationId}?fields=messages`);
-  const messageIds = convo?.messages?.data || [];
+  // Com Standard Access, não conseguimos ler mensagens individuais
+  // Retornamos lista vazia com aviso
+  return { data: [] };
+}
 
-  // 2. Fetch details for each message
-  const messages = await Promise.all(
-    messageIds.slice(0, 20).map(async (msg) => {
-      try {
-        return await authFetch(companyId, `${FB}/${msg.id}?fields=id,created_time,from,to,message`);
-      } catch {
-        return { id: msg.id, message: "" };
-      }
-    })
-  );
-
-  return { data: messages };
+export async function sendTextMessage(companyId, recipientId, text) {
+  throw new Error("Envio de mensagens requer aprovacao do App Review da Meta. Em breve estara disponivel.");
 }
 
 export async function getMyProfile(companyId) {
   const token = await getTokenForCompany(companyId);
   if (!token) throw new Error("Instagram nao conectado.");
 
-  return authFetch(companyId, `${FB}/${token.igUserId}?fields=id,username,name,profile_picture_url`);
+  const res = await fetch(`${IG}/me?fields=user_id,username,name,profile_picture_url&access_token=${token.accessToken}`);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data;
 }
 
 export async function getConnectedAccount(companyId) {
@@ -279,14 +205,6 @@ export async function getConnectedAccount(companyId) {
 
 export async function disconnectAccount(companyId) {
   tokenCache.delete(companyId);
-  await supabase
-    .from("lyn_integration_instances")
-    .update({ status: "inactive" })
-    .eq("company_id", companyId)
-    .eq("provider", "instagram");
-  await supabase
-    .from("lyn_integrations")
-    .update({ active: false })
-    .eq("company_id", companyId)
-    .eq("type", "instagram");
+  await supabase.from("lyn_integration_instances").update({ status: "inactive" }).eq("company_id", companyId).eq("provider", "instagram");
+  await supabase.from("lyn_integrations").update({ active: false }).eq("company_id", companyId).eq("type", "instagram");
 }
