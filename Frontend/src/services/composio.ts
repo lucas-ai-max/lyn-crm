@@ -1,5 +1,5 @@
 // Instagram API via Composio — leitura de DMs
-const API_BASE = import.meta.env.VITE_API_URL || "";
+const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 const API = `${API_BASE}/api/instagram`;
 
 // === Connection / OAuth ===
