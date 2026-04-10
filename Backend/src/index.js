@@ -21,6 +21,6 @@ app.use("/api/instagram", instagramRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
 
 // --- Start ---
-app.listen(config.port, () => {
-  console.log(`Lyn CRM Backend running on http://localhost:${config.port}`);
+app.listen(config.port, "0.0.0.0", () => {
+  console.log(`Lyn CRM Backend running on port ${config.port}`);
 });
