@@ -35,6 +35,22 @@ export async function getById(id) {
 }
 
 export async function create(lead) {
+  // Se não tem contact_id mas tem nome, auto-cria contato
+  if (!lead.contact_id && lead.nome && lead.company_id) {
+    const { findOrCreate } = await import("./contacts.service.js");
+    const { data: contact } = await findOrCreate({
+      nome: lead.nome,
+      email: lead.email,
+      telefone: lead.telefone,
+      telefone_2: lead.telefone_2,
+      empresa: lead.empresa,
+      segmento: lead.segmento,
+      source: lead.source,
+      company_id: lead.company_id,
+    });
+    lead.contact_id = contact.id;
+  }
+
   const { data, error } = await supabase
     .from("lyn_leads")
     .insert(lead)

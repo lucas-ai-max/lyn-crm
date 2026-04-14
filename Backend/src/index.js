@@ -7,6 +7,7 @@ import { swaggerSpec } from "./config/swagger.js";
 import instagramRoutes from "./routes/instagram/instagram.routes.js";
 import whatsappRoutes from "./routes/whatsapp/whatsapp.routes.js";
 import leadsRoutes from "./routes/leads/leads.routes.js";
+import contactsRoutes from "./routes/contacts/contacts.routes.js";
 
 // --- Error handlers ---
 process.on("uncaughtException", (err) => {
@@ -39,6 +40,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/instagram", instagramRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
 app.use("/api/leads", leadsRoutes);
+app.use("/api/contacts", contactsRoutes);
 
 // --- Start ---
 app.listen(PORT, "0.0.0.0", () => {
