@@ -32,7 +32,11 @@
       "WebFetch(domain:medium.com)",
       "WebFetch(domain:gist.github.com)",
       "WebFetch(domain:elfsight.com)",
-      "WebFetch(domain:chatwoot.help)"
+      "WebFetch(domain:chatwoot.help)",
+      "Bash(curl -s 'https://graph.instagram.com/v25.0/me/conversations?platform=instagram&access_token=IGAAS5xx2B8ZB1BZAGJkdVRjRkhjLVQ4NlVJdDFSdzhvMWdEM1hQc1cyRTc1dnhGRmN6dGFkbWJpZA1JWN1M4ZAXplcmo4cjRESEozdUFlWV9ubWtnZA3AteDBEMFctNDNiaTVxQU9ja29ZAbFVRdVRNelZALZAlNRU09pSTNCV2FpanUySQZDZD')",
+      "Bash(curl -s 'https://graph.instagram.com/v25.0/17841410323155252/conversations?platform=instagram&access_token=IGAAS5xx2B8ZB1BZAGJkdVRjRkhjLVQ4NlVJdDFSdzhvMWdEM1hQc1cyRTc1dnhGRmN6dGFkbWJpZA1JWN1M4ZAXplcmo4cjRESEozdUFlWV9ubWtnZA3AteDBEMFctNDNiaTVxQU9ja29ZAbFVRdVRNelZALZAlNRU09pSTNCV2FpanUySQZDZD')",
+      "Bash(curl -s 'https://graph.instagram.com/me?fields=user_id,username,name,profile_picture_url&access_token=IGAAS5xx2B8ZB1BZAGJkdVRjRkhjLVQ4NlVJdDFSdzhvMWdEM1hQc1cyRTc1dnhGRmN6dGFkbWJpZA1JWN1M4ZAXplcmo4cjRESEozdUFlWV9ubWtnZA3AteDBEMFctNDNiaTVxQU9ja29ZAbFVRdVRNelZALZAlNRU09pSTNCV2FpanUySQZDZD')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://unavatar.io/instagram/ojoao.leao\")"
     ]
   }
 }
