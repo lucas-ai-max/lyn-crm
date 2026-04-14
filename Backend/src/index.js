@@ -1,7 +1,9 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
 import { config } from "./config/env.js";
+import { swaggerSpec } from "./config/swagger.js";
 import instagramRoutes from "./routes/instagram/instagram.routes.js";
 import whatsappRoutes from "./routes/whatsapp/whatsapp.routes.js";
 import leadsRoutes from "./routes/leads/leads.routes.js";
@@ -21,6 +23,12 @@ const PORT = process.env.PORT || 3001;
 // --- Middleware ---
 app.use(cors({ origin: config.cors.origins, credentials: true }));
 app.use(express.json());
+
+// --- Swagger Docs ---
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: "Lyn CRM API Docs",
+}));
+app.get("/api/docs.json", (req, res) => res.json(swaggerSpec));
 
 // --- Health Check ---
 app.get("/api/health", (req, res) => {

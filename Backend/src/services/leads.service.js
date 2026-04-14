@@ -13,11 +13,13 @@ export async function list(companyId, filters = {}) {
   if (filters.pipeline_id) query = query.eq("pipeline_id", filters.pipeline_id);
   if (filters.stage_id) query = query.eq("stage_id", filters.stage_id);
   if (filters.responsavel_id) query = query.eq("responsavel_id", filters.responsavel_id);
-  if (filters.search) query = query.ilike("nome", `%${filters.search}%`);
+  if (filters.prioridade) query = query.eq("prioridade", filters.prioridade);
+  if (filters.search) query = query.or(`nome.ilike.%${filters.search}%,email.ilike.%${filters.search}%,telefone.ilike.%${filters.search}%`);
+  if (filters.tags) query = query.contains("tags", [filters.tags]);
   if (filters.limit) query = query.limit(filters.limit);
   if (filters.offset) query = query.range(filters.offset, filters.offset + (filters.limit || 50) - 1);
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   if (error) throw new Error(error.message);
   return data;
 }
@@ -60,4 +62,26 @@ export async function remove(id) {
     .eq("id", id);
   if (error) throw new Error(error.message);
   return true;
+}
+
+// === Notes ===
+
+export async function listNotes(leadId) {
+  const { data, error } = await supabase
+    .from("lyn_lead_notes")
+    .select("*")
+    .eq("lead_id", leadId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function addNote(leadId, content, createdBy) {
+  const { data, error } = await supabase
+    .from("lyn_lead_notes")
+    .insert({ lead_id: leadId, content, created_by: createdBy })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
 }
