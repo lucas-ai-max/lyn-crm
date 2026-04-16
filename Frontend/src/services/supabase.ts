@@ -6,6 +6,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from '../integrations/supabase/types'
 import { useAuth } from "@/contexts/AuthContext";
+import { leadsApi } from "./crmApi";
 
 /// Importa os tipos gerados automaticamente pelo Supabase
 type Tables = Database['public']['Tables']
@@ -88,85 +89,31 @@ export const integrationInstancesService = {
 /**
  * Serviço de Leads
  */
+// Leads Service — uses REST API
 export const leadsService = {
   async listByCompany(companyId: string, responsavelId?: string) {
-    let query = supabase
-      .from('lyn_leads')
-      .select('*')
-      .eq('company_id', companyId)
-      .order('created_at', { ascending: false });
-
+    const leads = await leadsApi.list(companyId);
+    // Filter by responsavel_id if provided
     if (responsavelId) {
-      query = query.eq('responsavel_id', responsavelId);
+      return leads.filter(lead => lead.responsavel_id === responsavelId);
     }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-    return data;
+    return leads;
   },
 
   async getById(id: string, companyId?: string) {
-    let query = supabase
-      .from('lyn_leads')
-      .select('*')
-      .eq('id', id);
-
-    if (companyId) {
-      query = query.eq('company_id', companyId);
-    }
-
-    const { data, error } = await query.single();
-
-    if (error) throw error;
-    return data;
+    return leadsApi.getById(id);
   },
 
   async create(lead: LeadInsert & { company_id: string }) {
-    const payload = {
-      ...lead,
-      company_id: lead.company_id,
-    };
-
-    const { data, error } = await supabase
-      .from('lyn_leads')
-      .insert(payload)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return leadsApi.create(lead);
   },
 
   async update(id: string, updates: LeadUpdate, companyId?: string) {
-    let query = supabase
-      .from('lyn_leads')
-      .update(updates)
-      .eq('id', id);
-
-    if (companyId) {
-      query = query.eq('company_id', companyId);
-    }
-
-    const { data, error } = await query.select().single();
-
-    if (error) throw error;
-    return data;
+    return leadsApi.update(id, updates);
   },
 
   async delete(id: string, companyId?: string) {
-    let query = supabase
-      .from('lyn_leads')
-      .delete()
-      .eq('id', id);
-
-    if (companyId) {
-      query = query.eq('company_id', companyId);
-    }
-
-    const { error } = await query;
-
-    if (error) throw error;
+    return leadsApi.delete(id);
   }
 };
 
