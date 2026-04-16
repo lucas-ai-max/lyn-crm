@@ -43,6 +43,24 @@ app.use("/api/leads", leadsRoutes);
 app.use("/api/contacts", contactsRoutes);
 
 // --- Start ---
-app.listen(PORT, "0.0.0.0", () => {
+const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Lyn CRM Backend running on port ${PORT}`);
 });
+
+// --- Graceful Shutdown ---
+const shutdown = (signal) => {
+  console.log(`\n[${signal}] Shutting down gracefully...`);
+  server.close(() => {
+    console.log("HTTP server closed.");
+    process.exit(0);
+  });
+
+  // Force exit after 10 seconds
+  setTimeout(() => {
+    console.error("Forced shutdown - timeout exceeded");
+    process.exit(1);
+  }, 10000).unref();
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
