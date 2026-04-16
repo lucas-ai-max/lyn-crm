@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "prod": "node --no-warnings src/index.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0",
