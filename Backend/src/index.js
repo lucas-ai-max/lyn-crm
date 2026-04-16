@@ -2,12 +2,8 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
-import { validateEnv } from "./config/validate-env.js";
 import { config } from "./config/env.js";
 import { swaggerSpec } from "./config/swagger.js";
-
-// Validate environment variables on startup
-validateEnv();
 import instagramRoutes from "./routes/instagram/instagram.routes.js";
 import whatsappRoutes from "./routes/whatsapp/whatsapp.routes.js";
 import leadsRoutes from "./routes/leads/leads.routes.js";
