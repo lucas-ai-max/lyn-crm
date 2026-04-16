@@ -1,22 +1,18 @@
-# Build stage
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --only=production
-
-# Runtime stage
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy built dependencies from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --chown=node:node . .
+# Install dependencies
+COPY package*.json ./
+RUN npm ci --only=production
 
-USER node
+# Copy application code
+COPY . .
 
 EXPOSE 3001
 
-CMD ["npm", "start"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:3001/api/health || exit 1
+
+CMD ["node", "src/index.js"]
