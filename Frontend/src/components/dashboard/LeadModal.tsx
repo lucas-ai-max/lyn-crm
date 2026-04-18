@@ -631,7 +631,7 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] w-[95vw] max-w-3xl max-h-[90vh] flex flex-col overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? "Novo Cliente" : "Editar Cliente"}
@@ -650,8 +650,8 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-1 min-h-0 flex-col gap-6">
-            <div className="flex-1 min-h-0 space-y-6 overflow-y-visible md:overflow-y-auto md:pr-3">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-6">
+            <div className="space-y-6">
               <div className="space-y-2">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Contato vinculado
@@ -1094,7 +1094,7 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-border bg-background">
+            <div className="sticky bottom-0 flex justify-end gap-3 pt-4 border-t border-border bg-background">
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
