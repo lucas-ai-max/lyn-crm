@@ -94,6 +94,7 @@ export async function authenticateJwt(req, res, next) {
       .single();
 
     if (profileError || !profile?.company_id) {
+      console.error("Profile fetch error:", profileError);
       return res.status(401).json({ error: "Company not found for user" });
     }
 

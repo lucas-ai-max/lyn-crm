@@ -12,6 +12,11 @@ interface UseCompanyApiKeyBootstrapReturn {
 
 const STORAGE_KEY = (companyId: string) => `lyn.apikey.${companyId}`;
 
+const getBaseUrl = () => {
+  const base = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  return base.replace(/\/$/, '');
+};
+
 export function useCompanyApiKeyBootstrap(): UseCompanyApiKeyBootstrapReturn {
   const { companyId, session } = useAuth();
   const { toast } = useToast();
@@ -39,8 +44,9 @@ export function useCompanyApiKeyBootstrap(): UseCompanyApiKeyBootstrapReturn {
         }
 
         // Call bootstrap endpoint
+        const baseUrl = getBaseUrl();
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/api-keys/bootstrap`,
+          `${baseUrl}/api/api-keys/bootstrap`,
           {
             method: "POST",
             headers: {
@@ -85,8 +91,9 @@ export function useCompanyApiKeyBootstrap(): UseCompanyApiKeyBootstrapReturn {
 
     try {
       setIsLoading(true);
+      const baseUrl = getBaseUrl();
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/api-keys/bootstrap`,
+        `${baseUrl}/api/api-keys/bootstrap`,
         {
           method: "POST",
           headers: {
