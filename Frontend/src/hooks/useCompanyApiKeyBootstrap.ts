@@ -13,8 +13,12 @@ interface UseCompanyApiKeyBootstrapReturn {
 const STORAGE_KEY = (companyId: string) => `lyn.apikey.${companyId}`;
 
 const getBaseUrl = () => {
-  const base = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-  return base.replace(/\/$/, '');
+  let base = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  // Ensure no trailing slash
+  while (base.endsWith('/')) {
+    base = base.slice(0, -1);
+  }
+  return base;
 };
 
 export function useCompanyApiKeyBootstrap(): UseCompanyApiKeyBootstrapReturn {
