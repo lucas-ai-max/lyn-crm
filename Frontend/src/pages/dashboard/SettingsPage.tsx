@@ -43,7 +43,7 @@ interface Profile {
 }
 
 export default function SettingsPage() {
-  const { user, profile: authProfile } = useAuth();
+  const { user } = useAuth();
   const { role, isLoading: roleLoading } = useRole();
   const { data: companyData } = useCompany();
   const { apiKey, hasKeys, needsReentry, isLoading: bootstrapLoading, createFirstKey } = useCompanyApiKeyBootstrap();

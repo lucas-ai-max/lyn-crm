@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useActivePipelines, useDefaultPipeline, usePipelineStages } from "@/hooks/usePipelines";
 import { useAllContacts, Contact } from "@/hooks/useContacts";
+import { phoneSchema } from "@/lib/validators/phone";
 import {
   Dialog,
   DialogContent,
@@ -44,28 +45,8 @@ import { TagInput } from "@/components/ui/TagInput";
 const leadSchema = z.object({
   nome: z.string().trim().min(1, "Nome completo é obrigatório").max(100),
   email: z.string().trim().email("E-mail inválido").max(255).optional().or(z.literal('')),
-  telefone: z
-    .string()
-    .trim()
-    .max(50, "Telefone muito longo")
-    .optional()
-    .refine((value) => {
-      if (!value) return true;
-      // Extract only digits (handles JID format like 553172064228@s.whatsapp.net)
-      const digits = value.replace(/\D/g, "");
-      // Accept 10-15 digits (covers national and international formats)
-      return digits.length >= 10 && digits.length <= 15;
-    }, "Informe um telefone válido (10-15 dígitos)"),
-  telefone_2: z
-    .string()
-    .trim()
-    .max(50, "Telefone muito longo")
-    .optional()
-    .refine((value) => {
-      if (!value) return true;
-      const digits = value.replace(/\D/g, "");
-      return digits.length >= 10 && digits.length <= 15;
-    }, "Informe um telefone válido (10-15 dígitos)"),
+  telefone: phoneSchema,
+  telefone_2: phoneSchema,
   empresa: z.string().trim().max(100).optional(),
   segmento: z.string().trim().max(100).optional(),
   funil: z.string().trim().max(100).optional(),

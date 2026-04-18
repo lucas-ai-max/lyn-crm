@@ -10,16 +10,34 @@ interface UseCompanyApiKeyBootstrapReturn {
   createFirstKey: () => Promise<void>;
 }
 
+interface BootstrapResult {
+  data: { key: string } | null;
+  hasKeys: boolean;
+}
+
 const STORAGE_KEY = (companyId: string) => `lyn.apikey.${companyId}`;
 
-const getBaseUrl = () => {
-  let base = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-  // Ensure no trailing slash
-  while (base.endsWith('/')) {
-    base = base.slice(0, -1);
+const getBaseUrl = () =>
+  (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
+
+async function bootstrapRequest(
+  accessToken: string,
+  force = false
+): Promise<BootstrapResult> {
+  const res = await fetch(`${getBaseUrl()}/api/api-keys/bootstrap`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ force }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Bootstrap failed: ${res.status} ${res.statusText}`);
   }
-  return base;
-};
+  return res.json();
+}
 
 export function useCompanyApiKeyBootstrap(): UseCompanyApiKeyBootstrapReturn {
   const { companyId, session } = useAuth();
@@ -36,57 +54,42 @@ export function useCompanyApiKeyBootstrap(): UseCompanyApiKeyBootstrapReturn {
       return;
     }
 
+    let cancelled = false;
+
     const initializeKeys = async () => {
       try {
-        // Check if key is in sessionStorage
         const storedKey = sessionStorage.getItem(STORAGE_KEY(companyId));
         if (storedKey) {
+          if (cancelled) return;
           setApiKey(storedKey);
           setHasKeys(true);
-          setIsLoading(false);
           return;
         }
 
-        // Call bootstrap endpoint
-        const baseUrl = getBaseUrl();
-        const url = baseUrl + '/api/api-keys/bootstrap';
-        const response = await fetch(
-          url,
-          {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${session.access_token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const result = await bootstrapRequest(session.access_token, false);
+        if (cancelled) return;
 
-        if (!response.ok) {
-          throw new Error(`Bootstrap failed: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-
-        if (result.data && result.data.key) {
-          // New key was created
+        if (result.data?.key) {
           setApiKey(result.data.key);
           sessionStorage.setItem(STORAGE_KEY(companyId), result.data.key);
           setHasKeys(false);
         } else if (result.hasKeys) {
-          // Company already has keys, but session doesn't have a copy
           setHasKeys(true);
           setNeedsReentry(true);
         }
       } catch (error) {
+        if (cancelled) return;
         console.error("Error bootstrapping API key:", error);
-        // Don't fail on bootstrap error, just set hasKeys to true
         setHasKeys(true);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     initializeKeys();
+    return () => {
+      cancelled = true;
+    };
   }, [companyId, session]);
 
   const createFirstKey = useCallback(async () => {
@@ -96,25 +99,9 @@ export function useCompanyApiKeyBootstrap(): UseCompanyApiKeyBootstrapReturn {
 
     try {
       setIsLoading(true);
-      const baseUrl = getBaseUrl();
-      const url = baseUrl + '/api/api-keys/bootstrap';
-      const response = await fetch(
-        url,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const result = await bootstrapRequest(session.access_token, true);
 
-      if (!response.ok) {
-        throw new Error(`Failed to create API key: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      if (result.data && result.data.key) {
+      if (result.data?.key) {
         setApiKey(result.data.key);
         setHasKeys(true);
         setNeedsReentry(false);
@@ -137,11 +124,5 @@ export function useCompanyApiKeyBootstrap(): UseCompanyApiKeyBootstrapReturn {
     }
   }, [companyId, session, toast]);
 
-  return {
-    apiKey,
-    hasKeys,
-    needsReentry,
-    isLoading,
-    createFirstKey,
-  };
+  return { apiKey, hasKeys, needsReentry, isLoading, createFirstKey };
 }

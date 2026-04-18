@@ -22,30 +22,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { TagInput } from "@/components/ui/TagInput";
+import { phoneSchema } from "@/lib/validators/phone";
 
 const contactSchema = z.object({
   nome: z.string().trim().min(1, "Nome é obrigatório").max(100),
   email: z.string().trim().email("E-mail inválido").max(255).optional().or(z.literal('')),
-  telefone: z
-    .string()
-    .trim()
-    .max(50, "Telefone muito longo")
-    .optional()
-    .refine((value) => {
-      if (!value) return true;
-      const digits = value.replace(/\D/g, "");
-      return digits.length >= 10 && digits.length <= 15;
-    }, "Informe um telefone válido (10-15 dígitos)"),
-  telefone_2: z
-    .string()
-    .trim()
-    .max(50, "Telefone muito longo")
-    .optional()
-    .refine((value) => {
-      if (!value) return true;
-      const digits = value.replace(/\D/g, "");
-      return digits.length >= 10 && digits.length <= 15;
-    }, "Informe um telefone válido (10-15 dígitos)"),
+  telefone: phoneSchema,
+  telefone_2: phoneSchema,
   empresa: z.string().trim().max(100).optional(),
   segmento: z.string().trim().max(100).optional(),
   source: z.string().trim().max(100).optional(),

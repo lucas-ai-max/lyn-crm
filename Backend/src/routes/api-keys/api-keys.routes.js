@@ -1,36 +1,54 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import * as apiKeysService from "../../services/api-keys.service.js";
 import { authenticateApiKey, authenticateJwt } from "../../middleware/auth.middleware.js";
 
 const router = Router();
 
+const bootstrapLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many bootstrap requests, try again in a minute" },
+});
+
 /**
  * @swagger
  * /api/api-keys/bootstrap:
  *   post:
- *     summary: Bootstrap API key para nova empresa (criar primeira chave)
+ *     summary: Bootstrap/regenerate API key via Supabase JWT
+ *     description: |
+ *       - If `force=true` in body: always generates a new key (useful when session lost access).
+ *       - Otherwise: returns existing keys status or creates first key.
  *     tags: [API Keys]
  *     security:
  *       - BearerAuth: []
  *     responses:
  *       201:
- *         description: Primeira chave criada
+ *         description: New key created
  *       200:
- *         description: Empresa já possui chaves
+ *         description: Company already has keys (and force !== true)
  *       401:
- *         description: Token JWT inválido
+ *         description: Invalid JWT
+ *       429:
+ *         description: Rate limit exceeded
  */
-router.post("/bootstrap", authenticateJwt, async (req, res) => {
+router.post("/bootstrap", bootstrapLimiter, authenticateJwt, async (req, res) => {
   try {
+    const force = req.body?.force === true;
     const existing = await apiKeysService.listApiKeys(req.companyId);
-    if (existing.length > 0) {
+
+    if (existing.length > 0 && !force) {
       return res.json({ data: null, hasKeys: true });
     }
 
-    const key = await apiKeysService.createApiKey(req.companyId, "Chave Padrão");
+    const name = existing.length > 0 ? "Chave Regenerada" : "Chave Padrão";
+    const key = await apiKeysService.createApiKey(req.companyId, name);
     res.status(201).json({ data: key, hasKeys: false });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("[bootstrap] error:", err.message);
+    res.status(500).json({ error: "Failed to bootstrap API key" });
   }
 });
 

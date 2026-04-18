@@ -1,6 +1,19 @@
 import * as apiKeysService from "../services/api-keys.service.js";
 import { createClient } from "@supabase/supabase-js";
 
+const supabaseServiceKey =
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  "";
+const supabaseUrl = process.env.SUPABASE_URL || "";
+
+// Single Supabase client reused across all JWT validations
+const supabaseAdmin = supabaseUrl && supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+  : null;
+
 // Middleware to authenticate using API key or Bearer token
 export async function authenticateApiKey(req, res, next) {
   try {
@@ -69,43 +82,42 @@ export async function optionalAuth(req, res, next) {
 // JWT authentication middleware (uses Supabase JWT)
 export async function authenticateJwt(req, res, next) {
   try {
+    if (!supabaseAdmin) {
+      console.error("[JWT] Supabase admin client not configured (missing env vars)");
+      return res.status(500).json({ error: "Server configuration error" });
+    }
+
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ error: "JWT token required" });
     }
 
     const token = authHeader.slice(7);
-    const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-    const supabase = createClient(
-      process.env.SUPABASE_URL || "",
-      serviceKey
-    );
 
     // Verify the JWT token
-    const { data: user, error: userError } = await supabase.auth.getUser(token);
+    const { data: user, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user?.user?.id) {
       return res.status(401).json({ error: "Invalid JWT token" });
     }
 
     // Fetch company_id from lyn_profiles
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("lyn_profiles")
       .select("company_id")
       .eq("id", user.user.id)
       .single();
 
     if (profileError || !profile?.company_id) {
-      console.error("Profile fetch error:", profileError);
+      console.error("[JWT] Profile lookup failed:", profileError?.code || "no_company");
       return res.status(401).json({ error: "Company not found for user" });
     }
 
-    // Attach user info to request
     req.userId = user.user.id;
     req.companyId = profile.company_id;
 
     next();
   } catch (error) {
-    console.error("JWT auth middleware error:", error);
+    console.error("[JWT] Auth middleware error:", error.message);
     res.status(500).json({ error: "Authentication error" });
   }
 }
