@@ -328,6 +328,7 @@ export type Database = {
       }
       lyn_company: {
         Row: {
+          composio_entity_id: string | null
           created_at: string | null
           evolution_apikey: string | null
           evolution_url: string | null
@@ -339,12 +340,14 @@ export type Database = {
           facebook_webhook_token: string | null
           funis: string[] | null
           id: string
+          instagram_page_id: string | null
           name: string
           owner_id: string | null
           slug: string | null
           status_type: string[] | null
         }
         Insert: {
+          composio_entity_id?: string | null
           created_at?: string | null
           evolution_apikey?: string | null
           evolution_url?: string | null
@@ -356,12 +359,14 @@ export type Database = {
           facebook_webhook_token?: string | null
           funis?: string[] | null
           id?: string
+          instagram_page_id?: string | null
           name: string
           owner_id?: string | null
           slug?: string | null
           status_type?: string[] | null
         }
         Update: {
+          composio_entity_id?: string | null
           created_at?: string | null
           evolution_apikey?: string | null
           evolution_url?: string | null
@@ -373,6 +378,7 @@ export type Database = {
           facebook_webhook_token?: string | null
           funis?: string[] | null
           id?: string
+          instagram_page_id?: string | null
           name?: string
           owner_id?: string | null
           slug?: string | null
@@ -888,6 +894,7 @@ export type Database = {
         Row: {
           ad_id: string | null
           company_id: string | null
+          contact_id: string | null
           created_at: string | null
           custom_fields: Json | null
           description: string | null
@@ -920,6 +927,7 @@ export type Database = {
         Insert: {
           ad_id?: string | null
           company_id?: string | null
+          contact_id?: string | null
           created_at?: string | null
           custom_fields?: Json | null
           description?: string | null
@@ -952,6 +960,7 @@ export type Database = {
         Update: {
           ad_id?: string | null
           company_id?: string | null
+          contact_id?: string | null
           created_at?: string | null
           custom_fields?: Json | null
           description?: string | null
@@ -1010,6 +1019,69 @@ export type Database = {
             referencedRelation: "lyn_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "leads_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "lyn_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lyn_contacts: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          custom_fields: Json | null
+          email: string | null
+          empresa: string | null
+          id: string
+          nome: string
+          segmento: string | null
+          source: string | null
+          tags: string[] | null
+          telefone: string | null
+          telefone_2: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          custom_fields?: Json | null
+          email?: string | null
+          empresa?: string | null
+          id?: string
+          nome: string
+          segmento?: string | null
+          source?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          telefone_2?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          custom_fields?: Json | null
+          email?: string | null
+          empresa?: string | null
+          id?: string
+          nome?: string
+          segmento?: string | null
+          source?: string | null
+          tags?: string[] | null
+          telefone?: string | null
+          telefone_2?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "lyn_company"
+            referencedColumns: ["id"]
+          }
         ]
       }
       lyn_messages: {

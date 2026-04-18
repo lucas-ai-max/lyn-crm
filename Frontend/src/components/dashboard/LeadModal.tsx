@@ -10,6 +10,7 @@ import { useCompany } from "@/hooks/useCompany";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useActivePipelines, useDefaultPipeline, usePipelineStages } from "@/hooks/usePipelines";
+import { useAllContacts, Contact } from "@/hooks/useContacts";
 import {
   Dialog,
   DialogContent,
@@ -76,6 +77,7 @@ const leadSchema = z.object({
   tags: z.array(z.string()).optional(),
   status: z.string().optional(),
   responsavel_id: z.string().min(1, "Responsável é obrigatório"),
+  contact_id: z.string().nullable().optional(),
   valor_oportunidade: z
     .string()
     .trim()
@@ -111,6 +113,7 @@ interface LeadModalProps {
     pipeline_id?: string | null;
     stage_id?: string | null;
     responsavel_id?: string;
+    contact_id?: string | null;
     valor_oportunidade?: number | null;
   };
 }
@@ -136,6 +139,9 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
   const [funnelSearch, setFunnelSearch] = useState("");
   const [extraFunis, setExtraFunis] = useState<string[]>([]);
   const [funnelPopoverWidth, setFunnelPopoverWidth] = useState<number>();
+  const [isContactPickerOpen, setIsContactPickerOpen] = useState(false);
+  const [contactSearch, setContactSearch] = useState("");
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const lastOpenRef = useRef(open);
   const funnelTriggerRef = useRef<HTMLButtonElement | null>(null);
   const { user, profile, companyId } = useAuth();
@@ -146,6 +152,8 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
     updateCompanyFunis,
     isUpdatingFunis
   } = useCompany();
+
+  const { data: allContactsData = [] } = useAllContacts();
 
   const isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
 
@@ -242,6 +250,7 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
       stage_id: initialData?.stage_id || null,
       status: initialData?.status || companyStatusTypes[0] || "",
       responsavel_id: initialData?.responsavel_id || user?.id || "",
+      contact_id: initialData?.contact_id || null,
       valor_oportunidade: initialData?.valor_oportunidade ? String(initialData.valor_oportunidade) : "",
     },
   });
@@ -272,6 +281,7 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
       stage_id: initialData?.stage_id || null,
       status: initialData?.status || companyStatusTypes[0] || "",
       responsavel_id: initialData?.responsavel_id || user?.id || "",
+      contact_id: initialData?.contact_id || null,
       valor_oportunidade: initialData?.valor_oportunidade ? String(initialData.valor_oportunidade) : "",
     });
   }, [open, initialData, companyStatusTypes, user?.id, form]);
@@ -326,6 +336,18 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
     };
   }, [isFunnelOpen]);
 
+  useEffect(() => {
+    if (!open || !initialData?.contact_id) {
+      setSelectedContact(null);
+      return;
+    }
+
+    const contact = allContactsData.find(c => c.id === initialData.contact_id);
+    if (contact) {
+      setSelectedContact(contact);
+    }
+  }, [open, initialData?.contact_id, allContactsData]);
+
   const availableFunis = useMemo(() => {
     const merged = [...companyFunis, ...extraFunis]
       .map((value) => value?.trim())
@@ -346,6 +368,71 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
     if (!value) return false;
     return !availableFunis.some((funil) => funil.toLowerCase() === value);
   }, [availableFunis, funnelSearch]);
+
+  const handleSelectContact = (contact: Contact) => {
+    setSelectedContact(contact);
+    form.setValue("contact_id", contact.id);
+    setIsContactPickerOpen(false);
+    setContactSearch("");
+
+    // Auto-populate name/email/telefone/empresa if empty
+    if (!form.getValues("nome")) {
+      form.setValue("nome", contact.nome);
+    }
+    if (!form.getValues("email") && contact.email) {
+      form.setValue("email", contact.email);
+    }
+    if (!form.getValues("telefone") && contact.telefone) {
+      form.setValue("telefone", contact.telefone);
+    }
+    if (!form.getValues("empresa") && contact.empresa) {
+      form.setValue("empresa", contact.empresa);
+    }
+  };
+
+  const handleCreateAndSelectContact = async () => {
+    const searchValue = contactSearch.trim();
+    if (!searchValue) {
+      toast({
+        title: "Aviso",
+        description: "Digite um nome para criar um novo contato",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const { data: newContact, error } = await supabase
+        .from("lyn_contacts")
+        .insert({
+          nome: searchValue,
+          company_id: companyId,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Contato "${searchValue}" criado com sucesso`,
+      });
+
+      // Select the newly created contact
+      if (newContact) {
+        handleSelectContact(newContact);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Falha ao criar contato",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCreateFunil = async (value: string) => {
     if (!value.trim()) return;
@@ -457,6 +544,7 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
           pipeline_id: data.pipeline_id || null,
           stage_id: data.stage_id || null,
           company_id: companyId,
+          contact_id: data.contact_id || null,
           valor_oportunidade: parseOpportunityValue(data.valor_oportunidade),
           // We no longer populate 'notas' column directly, we use lead_notes table
         } as any).select().single();
@@ -488,6 +576,7 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
             stage_id: data.stage_id || null,
             responsavel_id: responsavelId,
             status: resolvedStatus,
+            contact_id: data.contact_id || null,
             valor_oportunidade: parseOpportunityValue(data.valor_oportunidade),
             // We no longer update 'notas' column directly
           } as any)
@@ -547,6 +636,9 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
 
   const handleClose = () => {
     form.reset();
+    setSelectedContact(null);
+    setContactSearch("");
+    setIsContactPickerOpen(false);
     onClose();
   };
 
@@ -580,6 +672,100 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
           <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-1 min-h-0 flex-col gap-6">
             <div className="flex-1 min-h-0 space-y-6 overflow-y-visible md:overflow-y-auto md:pr-3">
               <div className="space-y-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Contato vinculado
+                </h3>
+                <div className="mb-4">
+                  {selectedContact ? (
+                    <div className="p-3 border rounded-lg bg-muted/30 flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{selectedContact.nome}</p>
+                        {selectedContact.email && (
+                          <p className="text-xs text-muted-foreground">{selectedContact.email}</p>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedContact(null);
+                          form.setValue("contact_id", null);
+                          setContactSearch("");
+                        }}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                  ) : (
+                    <Popover open={isContactPickerOpen} onOpenChange={setIsContactPickerOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between"
+                          type="button"
+                        >
+                          <span className="text-muted-foreground">Selecione um contato...</span>
+                          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput
+                            placeholder="Buscar contato..."
+                            value={contactSearch}
+                            onValueChange={setContactSearch}
+                          />
+                          <CommandList>
+                            <CommandGroup>
+                              {allContactsData
+                                .filter((c) =>
+                                  c.nome.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                                  c.email?.toLowerCase().includes(contactSearch.toLowerCase())
+                                )
+                                .map((contact) => (
+                                  <CommandItem
+                                    key={contact.id}
+                                    value={contact.id}
+                                    onSelect={() => handleSelectContact(contact)}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedContact?.id === contact.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex-1">
+                                      <p className="font-medium text-sm">{contact.nome}</p>
+                                      {contact.email && (
+                                        <p className="text-xs text-muted-foreground">{contact.email}</p>
+                                      )}
+                                    </div>
+                                  </CommandItem>
+                                ))}
+
+                              {contactSearch &&
+                                !allContactsData.some((c) =>
+                                  c.nome.toLowerCase().includes(contactSearch.toLowerCase())
+                                ) && (
+                                  <CommandItem
+                                    value="create"
+                                    onSelect={handleCreateAndSelectContact}
+                                  >
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    <span className="text-sm">
+                                      Criar contato "{contactSearch}"
+                                    </span>
+                                  </CommandItem>
+                                )}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
+
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Dados básicos
                 </h3>

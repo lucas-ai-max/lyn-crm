@@ -6,9 +6,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { useRole } from '@/hooks/useRole';
+import { useCompanyApiKeyBootstrap } from '@/hooks/useCompanyApiKeyBootstrap';
+import { useCompany } from '@/hooks/useCompany';
 import { CompanySettingsForm } from '@/components/settings/CompanySettingsForm';
 import { QuickRepliesSettings } from '@/components/settings/QuickRepliesSettings';
 import { FacebookLeadsSettings } from '@/components/settings/FacebookLeadsSettings';
+import { ApiKeysManager } from '@/components/settings/ApiKeysManager';
 import {
   Card,
   CardContent,
@@ -21,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Copy, Check } from 'lucide-react';
 
 const profileSchema = z.object({
   first_name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(50),
@@ -40,11 +43,14 @@ interface Profile {
 }
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, profile: authProfile } = useAuth();
   const { role, isLoading: roleLoading } = useRole();
+  const { data: companyData } = useCompany();
+  const { apiKey, hasKeys, needsReentry, isLoading: bootstrapLoading, createFirstKey } = useCompanyApiKeyBootstrap();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const {
     register,
@@ -143,11 +149,12 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full max-w-lg grid-cols-4">
+        <TabsList className="grid w-full max-w-xl grid-cols-5">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="company">Empresa</TabsTrigger>
           <TabsTrigger value="quick_replies">Respostas</TabsTrigger>
-          <TabsTrigger value="integrations">Integracoes</TabsTrigger>
+          <TabsTrigger value="integrations">Integrações</TabsTrigger>
+          <TabsTrigger value="api">API</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-6">
@@ -259,6 +266,130 @@ export default function SettingsPage() {
         <TabsContent value="integrations" className="mt-6">
           <div className="space-y-6">
             <FacebookLeadsSettings />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="api" className="mt-6">
+          <div className="space-y-6">
+            {/* API Keys Section */}
+            {(role === 'admin' || role === 'superadmin') && (
+              <Card className="shadow-lyn">
+                <CardHeader>
+                  <CardTitle>Chaves de API</CardTitle>
+                  <CardDescription>
+                    Gerencie suas chaves de API para integração programática
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {bootstrapLoading ? (
+                    <div className="flex items-center justify-center min-h-[200px]">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : needsReentry ? (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Sua empresa possui chaves de API, mas você precisa criar uma nova para acessá-la nesta sessão.
+                      </p>
+                      <Button onClick={createFirstKey} disabled={bootstrapLoading}>
+                        {bootstrapLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Criar Nova Chave
+                      </Button>
+                    </div>
+                  ) : apiKey ? (
+                    <div className="space-y-4">
+                      <ApiKeysManager apiKey={apiKey} />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Nenhuma chave de API encontrada. Crie a primeira chave para começar.
+                      </p>
+                      <Button onClick={createFirstKey} disabled={bootstrapLoading}>
+                        {bootstrapLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Criar Primeira Chave
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Integration IDs Section */}
+            <Card className="shadow-lyn">
+              <CardHeader>
+                <CardTitle>IDs de Integração</CardTitle>
+                <CardDescription>
+                  Identificadores da sua empresa para integração com serviços externos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Instagram Page ID */}
+                  <div className="space-y-2">
+                    <Label>Instagram Page ID</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={companyData?.instagram_page_id || ''}
+                        disabled
+                        className="bg-muted font-mono text-sm"
+                        placeholder="Não configurado"
+                      />
+                      {companyData?.instagram_page_id && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(companyData.instagram_page_id);
+                            setCopiedId('instagram');
+                            setTimeout(() => setCopiedId(null), 2000);
+                          }}
+                        >
+                          {copiedId === 'instagram' ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Composio Entity ID */}
+                  <div className="space-y-2">
+                    <Label>Composio Entity ID</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={companyData?.composio_entity_id || ''}
+                        disabled
+                        className="bg-muted font-mono text-sm"
+                        placeholder="Não configurado"
+                      />
+                      {companyData?.composio_entity_id && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(companyData.composio_entity_id);
+                            setCopiedId('composio');
+                            setTimeout(() => setCopiedId(null), 2000);
+                          }}
+                        >
+                          {copiedId === 'composio' ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Esses IDs são gerados automaticamente quando você conecta seus serviços. Entre em contato com o suporte para configurar integrações.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>

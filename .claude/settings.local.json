@@ -36,7 +36,14 @@
       "Bash(curl -s 'https://graph.instagram.com/v25.0/me/conversations?platform=instagram&access_token=IGAAS5xx2B8ZB1BZAGJkdVRjRkhjLVQ4NlVJdDFSdzhvMWdEM1hQc1cyRTc1dnhGRmN6dGFkbWJpZA1JWN1M4ZAXplcmo4cjRESEozdUFlWV9ubWtnZA3AteDBEMFctNDNiaTVxQU9ja29ZAbFVRdVRNelZALZAlNRU09pSTNCV2FpanUySQZDZD')",
       "Bash(curl -s 'https://graph.instagram.com/v25.0/17841410323155252/conversations?platform=instagram&access_token=IGAAS5xx2B8ZB1BZAGJkdVRjRkhjLVQ4NlVJdDFSdzhvMWdEM1hQc1cyRTc1dnhGRmN6dGFkbWJpZA1JWN1M4ZAXplcmo4cjRESEozdUFlWV9ubWtnZA3AteDBEMFctNDNiaTVxQU9ja29ZAbFVRdVRNelZALZAlNRU09pSTNCV2FpanUySQZDZD')",
       "Bash(curl -s 'https://graph.instagram.com/me?fields=user_id,username,name,profile_picture_url&access_token=IGAAS5xx2B8ZB1BZAGJkdVRjRkhjLVQ4NlVJdDFSdzhvMWdEM1hQc1cyRTc1dnhGRmN6dGFkbWJpZA1JWN1M4ZAXplcmo4cjRESEozdUFlWV9ubWtnZA3AteDBEMFctNDNiaTVxQU9ja29ZAbFVRdVRNelZALZAlNRU09pSTNCV2FpanUySQZDZD')",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://unavatar.io/instagram/ojoao.leao\")"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://unavatar.io/instagram/ojoao.leao\")",
+      "Bash(find \"c:\\\\\\\\Projetos Cursor\\\\\\\\Lucas\\\\\\\\Lyn\\\\\\\\Frontend\\\\\\\\src\" -type f \\\\\\( -name \"*.jsx\" -o -name \"*.ts\" -o -name \"*.tsx\" -o -name \"*.js\" \\\\\\))",
+      "Bash(cd \"c:\\\\\\\\Projetos Cursor\\\\\\\\Lucas\\\\\\\\Lyn\\\\\\\\Frontend\\\\\\\\src\")",
+      "Bash(ls -la \"c:\\\\\\\\Projetos Cursor\\\\\\\\Lucas\\\\\\\\Lyn\\\\\\\\Frontend\\\\\\\\src\\\\\\\\services\")",
+      "Bash(ls -la \"c:\\\\\\\\Projetos Cursor\\\\\\\\Lucas\\\\\\\\Lyn\\\\\\\\Frontend\\\\\\\\src\\\\\\\\pages\\\\\\\\dashboard\")",
+      "Bash(cd \"c:\\\\\\\\Projetos Cursor\\\\\\\\Lucas\\\\\\\\Lyn\\\\\\\\Backend\")",
+      "Bash(npm ls *)",
+      "Bash(npm run *)"
     ]
   }
 }

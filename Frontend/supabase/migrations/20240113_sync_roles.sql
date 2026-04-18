@@ -27,12 +27,20 @@ END;
 $$;
 
 -- 2. Create the trigger on the profiles table
-DROP TRIGGER IF EXISTS on_profile_role_change ON public.profiles;
-
-CREATE TRIGGER on_profile_role_change
-AFTER INSERT OR UPDATE OF role ON public.profiles
-FOR EACH ROW
-EXECUTE PROCEDURE public.sync_profile_role_to_user_roles();
+-- Note: Only create if role column exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'profiles' AND column_name = 'role'
+  ) THEN
+    DROP TRIGGER IF EXISTS on_profile_role_change ON public.profiles;
+    CREATE TRIGGER on_profile_role_change
+    AFTER INSERT OR UPDATE OF role ON public.profiles
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.sync_profile_role_to_user_roles();
+  END IF;
+END $$;
 
 -- 3. (Optional) Backfill: Update existing user_roles based on current profiles
 -- Uncomment the following line if you want to force sync immediately

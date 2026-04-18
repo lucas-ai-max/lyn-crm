@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import AppShell from "./components/layout/AppShell";
 import DashboardHome from "./pages/dashboard/DashboardHome";
 import Clients from "./pages/dashboard/Clients";
+import Contacts from "./pages/dashboard/Contacts";
 import ClientDetails from "./pages/dashboard/ClientDetails";
 import Conversations from "./pages/dashboard/Conversations";
 import Reports from "./pages/dashboard/Reports";
@@ -77,6 +78,7 @@ const App = () => (
             >
               <Route index element={<DashboardHome />} />
               <Route path="clients" element={<Clients />} />
+              <Route path="contacts" element={<Contacts />} />
               <Route path=":leadId" element={<ClientDetails />} />
               <Route path="conversations" element={<Conversations />} />
               <Route path="reports" element={<Reports />} />

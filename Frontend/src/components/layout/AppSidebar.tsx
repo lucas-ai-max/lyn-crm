@@ -22,6 +22,7 @@ import {
   Instagram,
   Cable,
   Inbox,
+  BookUser,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,6 +50,7 @@ import { useProfile } from "@/hooks/useProfile";
 const principalItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Leads", url: "/dashboard/clients", icon: Users },
+  { title: "Contatos", url: "/dashboard/contacts", icon: BookUser },
   { title: "Relatórios", url: "/dashboard/reports", icon: BarChart3 },
 ];
 
