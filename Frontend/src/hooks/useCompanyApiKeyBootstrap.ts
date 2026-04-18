@@ -49,8 +49,9 @@ export function useCompanyApiKeyBootstrap(): UseCompanyApiKeyBootstrapReturn {
 
         // Call bootstrap endpoint
         const baseUrl = getBaseUrl();
+        const url = baseUrl + '/api/api-keys/bootstrap';
         const response = await fetch(
-          `${baseUrl}/api/api-keys/bootstrap`,
+          url,
           {
             method: "POST",
             headers: {
@@ -96,8 +97,9 @@ export function useCompanyApiKeyBootstrap(): UseCompanyApiKeyBootstrapReturn {
     try {
       setIsLoading(true);
       const baseUrl = getBaseUrl();
+      const url = baseUrl + '/api/api-keys/bootstrap';
       const response = await fetch(
-        `${baseUrl}/api/api-keys/bootstrap`,
+        url,
         {
           method: "POST",
           headers: {
