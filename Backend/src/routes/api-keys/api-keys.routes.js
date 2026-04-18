@@ -7,9 +7,10 @@ const router = Router();
 
 const bootstrapLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 5,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true,
   message: { error: "Too many bootstrap requests, try again in a minute" },
 });
 
