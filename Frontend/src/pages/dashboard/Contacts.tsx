@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useContacts } from "@/hooks/useContacts";
 import { ContactModal } from "@/components/dashboard/ContactModal";
@@ -44,6 +45,7 @@ export default function Contacts() {
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
     data: paginatedData,
@@ -53,6 +55,18 @@ export default function Contacts() {
     pageSize,
     searchQuery,
   });
+
+  // Open edit modal automatically when ?edit=<id> is in URL
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (editId) {
+      setEditingContactId(editId);
+      setIsModalOpen(true);
+      // Clean up query param so refresh doesn't reopen
+      searchParams.delete("edit");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const contacts = paginatedData?.contacts || [];
   const totalCount = paginatedData?.totalCount || 0;
@@ -102,9 +116,36 @@ export default function Contacts() {
     setEditingContactId(null);
   };
 
-  const editingContact = editingContactId
+  const contactFromList = editingContactId
     ? contacts.find((c) => c.id === editingContactId)
     : null;
+
+  const [editingContactDirect, setEditingContactDirect] = useState<Contact | null>(null);
+
+  // If editing by id from URL param and contact isn't in the current page,
+  // fetch it directly
+  useEffect(() => {
+    if (!editingContactId || contactFromList) {
+      setEditingContactDirect(null);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("lyn_contacts")
+        .select("*")
+        .eq("id", editingContactId)
+        .single();
+      if (!cancelled && !error && data) {
+        setEditingContactDirect(data as Contact);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [editingContactId, contactFromList]);
+
+  const editingContact = contactFromList || editingContactDirect;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

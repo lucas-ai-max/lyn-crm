@@ -43,7 +43,11 @@
       "Bash(ls -la \"c:\\\\\\\\Projetos Cursor\\\\\\\\Lucas\\\\\\\\Lyn\\\\\\\\Frontend\\\\\\\\src\\\\\\\\pages\\\\\\\\dashboard\")",
       "Bash(cd \"c:\\\\\\\\Projetos Cursor\\\\\\\\Lucas\\\\\\\\Lyn\\\\\\\\Backend\")",
       "Bash(npm ls *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(curl -s -X POST -H 'X-API-Key: lyn_16ba00a06ddbc9296d6092c8e071b3d676a84fc49368d55858314825dfd754b4' -H 'Content-Type: application/json' -d '{\"name\":\"test-via-curl\"}' https://ffmpeg-lyn-crm-backend.dewwpd.easypanel.host/api/api-keys)",
+      "Bash(curl -s -H 'X-API-Key: lyn_16ba00a06ddbc9296d6092c8e071b3d676a84fc49368d55858314825dfd754b4' https://ffmpeg-lyn-crm-backend.dewwpd.easypanel.host/api/api-keys)",
+      "Bash(curl -s -X POST -H 'X-API-Key: lyn_16ba00a06ddbc9296d6092c8e071b3d676a84fc49368d55858314825dfd754b4' -H 'Content-Type: application/json' -d '{\"name\":\"test-via-curl-regen\"}' https://ffmpeg-lyn-crm-backend.dewwpd.easypanel.host/api/api-keys/0fd98d26-3723-4a6a-9855-74201e75f284/regenerate)",
+      "Bash(curl -s -X DELETE -H 'X-API-Key: lyn_16ba00a06ddbc9296d6092c8e071b3d676a84fc49368d55858314825dfd754b4' https://ffmpeg-lyn-crm-backend.dewwpd.easypanel.host/api/api-keys/0fd98d26-3723-4a6a-9855-74201e75f284)"
     ]
   }
 }

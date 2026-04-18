@@ -658,13 +658,23 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
                 </h3>
                 <div className="mb-4">
                   {selectedContact ? (
-                    <div className="p-3 border rounded-lg bg-muted/30 flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{selectedContact.nome}</p>
+                    <div className="p-3 border rounded-lg bg-muted/30 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        className="flex-1 text-left hover:bg-muted/60 rounded-md -m-1 p-1 transition-colors"
+                        onClick={() => {
+                          handleClose();
+                          navigate(`/dashboard/contacts?edit=${selectedContact.id}`);
+                        }}
+                        title="Abrir contato na página de Contatos"
+                      >
+                        <p className="font-medium text-sm text-primary underline-offset-4 hover:underline">
+                          {selectedContact.nome}
+                        </p>
                         {selectedContact.email && (
                           <p className="text-xs text-muted-foreground">{selectedContact.email}</p>
                         )}
-                      </div>
+                      </button>
                       <Button
                         type="button"
                         variant="ghost"
@@ -674,6 +684,7 @@ export function LeadModal({ open, onClose, onSave, mode, initialData }: LeadModa
                           form.setValue("contact_id", null);
                           setContactSearch("");
                         }}
+                        title="Desvincular contato"
                       >
                         ✕
                       </Button>
