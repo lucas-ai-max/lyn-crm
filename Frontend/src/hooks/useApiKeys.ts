@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api-url";
 
 export interface ApiKey {
   id: string;
@@ -14,8 +15,6 @@ export interface CreateApiKeyResponse {
   key: string;
   created_at: string;
 }
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 export function useApiKeys() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
@@ -35,7 +34,7 @@ export function useApiKeys() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/api-keys`, {
+      const response = await fetch(`${apiUrl("/api/api-keys")}`, {
         headers: {
           "X-API-Key": apiKey,
         },
@@ -65,7 +64,7 @@ export function useApiKeys() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/api-keys`, {
+      const response = await fetch(`${apiUrl("/api/api-keys")}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -99,7 +98,7 @@ export function useApiKeys() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/api-keys/${keyId}/regenerate`, {
+      const response = await fetch(`${apiUrl("/api/api-keys")}/${keyId}/regenerate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -135,7 +134,7 @@ export function useApiKeys() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/api-keys/${keyId}`, {
+      const response = await fetch(`${apiUrl("/api/api-keys")}/${keyId}`, {
         method: "DELETE",
         headers: {
           "X-API-Key": apiKey,

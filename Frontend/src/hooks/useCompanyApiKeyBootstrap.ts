@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/api-url";
 
 interface UseCompanyApiKeyBootstrapReturn {
   apiKey: string | null;
@@ -17,14 +18,11 @@ interface BootstrapResult {
 
 const STORAGE_KEY = (companyId: string) => `lyn.apikey.${companyId}`;
 
-const getBaseUrl = () =>
-  (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
-
 async function bootstrapRequest(
   accessToken: string,
   force = false
 ): Promise<BootstrapResult> {
-  const res = await fetch(`${getBaseUrl()}/api/api-keys/bootstrap`, {
+  const res = await fetch(apiUrl("/api/api-keys/bootstrap"), {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
