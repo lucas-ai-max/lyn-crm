@@ -1,7 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import * as apiKeysService from "../../services/api-keys.service.js";
-import { authenticateApiKey, authenticateJwt } from "../../middleware/auth.middleware.js";
+import { authenticateJwt, authenticateJwtOrApiKey } from "../../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -81,7 +81,7 @@ router.post("/bootstrap", bootstrapLimiter, authenticateJwt, async (req, res) =>
  *       401:
  *         description: Não autenticado
  */
-router.get("/", authenticateApiKey, async (req, res) => {
+router.get("/", authenticateJwtOrApiKey, async (req, res) => {
   try {
     const keys = await apiKeysService.listApiKeys(req.companyId);
     res.json({ data: keys });
@@ -124,7 +124,7 @@ router.get("/", authenticateApiKey, async (req, res) => {
  *       401:
  *         description: Não autenticado
  */
-router.post("/", authenticateApiKey, async (req, res) => {
+router.post("/", authenticateJwtOrApiKey, async (req, res) => {
   try {
     const { name } = req.body;
     const key = await apiKeysService.createApiKey(req.companyId, name || "API Key");
@@ -153,7 +153,7 @@ router.post("/", authenticateApiKey, async (req, res) => {
  *       404:
  *         description: Chave não encontrada
  */
-router.get("/:id", authenticateApiKey, async (req, res) => {
+router.get("/:id", authenticateJwtOrApiKey, async (req, res) => {
   try {
     const keyInfo = await apiKeysService.getApiKeyInfo(req.params.id);
     if (keyInfo.company_id !== req.companyId) {
@@ -205,7 +205,7 @@ router.get("/:id", authenticateApiKey, async (req, res) => {
  *       404:
  *         description: Chave não encontrada
  */
-router.post("/:id/regenerate", authenticateApiKey, async (req, res) => {
+router.post("/:id/regenerate", authenticateJwtOrApiKey, async (req, res) => {
   try {
     const oldKeyInfo = await apiKeysService.getApiKeyInfo(req.params.id);
     if (oldKeyInfo.company_id !== req.companyId) {
@@ -245,7 +245,7 @@ router.post("/:id/regenerate", authenticateApiKey, async (req, res) => {
  *       404:
  *         description: Chave não encontrada
  */
-router.delete("/:id", authenticateApiKey, async (req, res) => {
+router.delete("/:id", authenticateJwtOrApiKey, async (req, res) => {
   try {
     const keyInfo = await apiKeysService.getApiKeyInfo(req.params.id);
     if (keyInfo.company_id !== req.companyId) {

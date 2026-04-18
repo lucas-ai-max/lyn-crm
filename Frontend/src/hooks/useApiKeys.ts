@@ -21,12 +21,16 @@ export function useApiKeys() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get auth token
-  const getAuthToken = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return session?.access_token;
+  // Build auth headers: include both JWT and X-API-Key when available.
+  // Backend accepts either via authenticateJwtOrApiKey middleware.
+  const buildAuthHeaders = async (apiKey?: string): Promise<Record<string, string>> => {
+    const headers: Record<string, string> = {};
+    if (apiKey) headers["X-API-Key"] = apiKey;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+    }
+    return headers;
   };
 
   // List API keys
@@ -35,9 +39,7 @@ export function useApiKeys() {
     setError(null);
     try {
       const response = await fetch(`${apiUrl("/api/api-keys")}`, {
-        headers: {
-          "X-API-Key": apiKey,
-        },
+        headers: await buildAuthHeaders(apiKey),
       });
 
       if (!response.ok) {
@@ -68,7 +70,7 @@ export function useApiKeys() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": apiKey,
+          ...(await buildAuthHeaders(apiKey)),
         },
         body: JSON.stringify({ name: name || "API Key" }),
       });
@@ -102,7 +104,7 @@ export function useApiKeys() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": apiKey,
+          ...(await buildAuthHeaders(apiKey)),
         },
         body: JSON.stringify({ name }),
       });
@@ -136,9 +138,7 @@ export function useApiKeys() {
     try {
       const response = await fetch(`${apiUrl("/api/api-keys")}/${keyId}`, {
         method: "DELETE",
-        headers: {
-          "X-API-Key": apiKey,
-        },
+        headers: await buildAuthHeaders(apiKey),
       });
 
       if (!response.ok) {
