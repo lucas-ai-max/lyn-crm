@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -70,6 +70,22 @@ export function ContactModal({
       tags: initialData?.tags || [],
     },
   });
+
+  // Re-populate form when modal opens or initialData changes
+  // (e.g. when opened via ?edit=<id> and contact is fetched asynchronously)
+  useEffect(() => {
+    if (!open) return;
+    form.reset({
+      nome: initialData?.nome || "",
+      email: initialData?.email || "",
+      telefone: initialData?.telefone || "",
+      telefone_2: initialData?.telefone_2 || "",
+      empresa: initialData?.empresa || "",
+      segmento: initialData?.segmento || "",
+      source: initialData?.source || "",
+      tags: initialData?.tags || [],
+    });
+  }, [open, initialData, form]);
 
   const handleClose = () => {
     form.reset();
