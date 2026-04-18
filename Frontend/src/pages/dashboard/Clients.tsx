@@ -210,13 +210,20 @@ export default function Clients() {
               nome: editingLead.nome,
               email: editingLead.email || "",
               telefone: editingLead.telefone || "",
+              telefone_2: (editingLead as any).telefone_2 || "",
               empresa: editingLead.empresa || "",
               segmento: editingLead.segmento || "",
               prioridade: (editingLead as any).prioridade || "medium",
               notas: Array.isArray(editingLead.notas) ? editingLead.notas.join("\n") : (editingLead.notas || ""),
+              description: (editingLead as any).description || "",
+              tags: (editingLead as any).tags || [],
               funil: editingLead.funil || "",
+              pipeline_id: (editingLead as any).pipeline_id ?? null,
+              stage_id: (editingLead as any).stage_id ?? null,
               status: editingLead.status || "",
               responsavel_id: editingLead.responsavel_id || "",
+              contact_id: (editingLead as any).contact_id ?? null,
+              valor_oportunidade: (editingLead as any).valor_oportunidade ?? null,
             }
             : undefined
         }
