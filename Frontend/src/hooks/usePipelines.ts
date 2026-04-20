@@ -362,6 +362,7 @@ export function useCreateStage() {
                     name,
                     color: color || "#6B7280",
                     position: nextPosition,
+                    is_active: true,
                 })
                 .select()
                 .single();
